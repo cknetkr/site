@@ -490,6 +490,8 @@ function bindExamModeControls() {
   updateExamModeUI();
 }
 
+
+
 function createRng(seed) {
   let state = (seed >>> 0) || 1;
   return () => {
@@ -679,7 +681,11 @@ function buildGeneratedExam(banks) {
 
     const subjectQuestions = shuffleWithRng(selected, rng)
       .slice(0, 20)
-      .map(({ q }) => cloneQuestionWithShuffledOptions(q, rng));
+      .map(({ pool, q }) => {
+        const cloned = cloneQuestionWithShuffledOptions(q, rng);
+        cloned.tag = pool.tag; // 파트명(태그) 주입
+        return cloned;
+      });
 
     finalQuestions.push(...subjectQuestions);
   }
@@ -927,7 +933,7 @@ function buildSelectedPartsExam(banks, selectedPartIndices, mode = 'learn') {
     bank.questions.forEach(q => {
       const cloned = cloneQuestionWithShuffledOptions(q, rng);
       cloned._subjectIndex = bank.subjectIndex;
-      cloned._partTag = bank.tag;
+      cloned.tag = bank.tag; // _partTag 대신 tag 사용 (레이아웃 호환성)
       questions.push(cloned);
     });
   });
@@ -1052,7 +1058,7 @@ function buildQuiz() {
           <div class="q-reveal-slot" style="display:none; margin-left:auto;">
             <label class="q-inline-reveal" for="qInlineReveal${qi}">
               <input id="qInlineReveal${qi}" class="q-inline-reveal-input" type="checkbox" onchange="toggleExamRevealModeInline(this.checked)">
-              <span>정답·해설 보기</span>
+              <span>정답·해설</span>
             </label>
           </div>
         </div>
