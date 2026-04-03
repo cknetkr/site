@@ -11,7 +11,7 @@
     width: min(760px, calc(100% - 1.6rem));
     margin: 0 auto;
     box-sizing: border-box;
-    padding: 0.7rem 0.8rem;
+    padding: 0.75rem 1rem; /* 데스크톱과 일치시킴 */
   }
 
   .quiz-header-top {
@@ -57,10 +57,10 @@
 
   body.exam-layout-mode .exam-timer-box {
     display: grid !important;
-    grid-template-columns: 1fr 1fr; /* 2열 구조 */
+    grid-template-columns: 1fr 1fr;
     gap: 4px 12px;
-    padding: 6px 12px;
-    margin-top: 4px;
+    padding: 8px 12px;
+    margin-top: 10px; /* 학습모드 태그 내비게이션과 높이 footprint 일치 */
   }
 
   body.exam-layout-mode .exam-timer-line.exam-progress-line {

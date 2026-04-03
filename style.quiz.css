@@ -14,7 +14,7 @@
   background: var(--header-bg);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
-  padding: 0.9rem 1.2rem;
+  padding: 0.75rem 1rem; /* 모바일 패딩 기종별 상이함 통일 */
 }
 
 .quiz-header-top {
@@ -47,14 +47,12 @@
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface2);
-  visibility: hidden;
-  pointer-events: none;
+  display: none; /* 공간 차지 방지 */
   transition: opacity 0.15s ease;
 }
 
 .exam-timer-box.visible {
-  visibility: visible;
-  pointer-events: auto;
+  display: flex; /* 기본 플렉스 */
 }
 
 .exam-timer-line {
