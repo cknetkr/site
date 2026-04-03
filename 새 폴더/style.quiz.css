@@ -1,9 +1,13 @@
-/* ── QUIZ ── */
+/* ═══════════════════════════════════════════════
+   style.quiz.css  —  퀴즈 화면 레이아웃 · 헤더 · 네비
+   ═══════════════════════════════════════════════ */
+
 #quiz {
   padding: 0;
   background: var(--header-bg);
 }
 
+/* ── 헤더 ── */
 .quiz-header {
   position: sticky;
   top: 0;
@@ -14,7 +18,7 @@
   background: var(--header-bg);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
-  padding: 0.75rem 1rem; /* 모바일 패딩 기종별 상이함 통일 */
+  padding: 0.75rem 1rem;
 }
 
 .quiz-header-top {
@@ -35,65 +39,53 @@
   justify-content: flex-end;
 }
 
-.exam-timer-box {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap; 
+/* ── 헤더 공용 버튼 ── */
+.btn-back {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-evenly;
-  gap: 8px 16px;
-  min-width: 170px;
-  padding: 5px 12px;
+  justify-content: center;
+  background: none;
   border: 1px solid var(--border);
+  color: var(--text2);
+  padding: 0;
   border-radius: 8px;
-  background: var(--surface2);
-  display: none;
-  min-height: 52px; /* Row 3 높이 통일 */
-  margin-top: 0.6rem; /* Row 3 여백 통일 */
-  box-sizing: border-box;
-  transition: opacity 0.15s ease;
-}
-
-.exam-timer-box.visible {
-  display: flex; /* 기본 플렉스 */
-}
-
-.exam-timer-line {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 11px;
-  color: var(--text2);
-  line-height: 1.3;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: var(--font);
+  line-height: 1;
+  transition: all .15s;
   white-space: nowrap;
-  flex: 1;
-  min-width: 0;
+  min-width: 52px;
+  height: 32px;
 }
 
-.exam-progress-line {
-  color: var(--text2);
+.btn-back:hover {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
-.exam-progress-line strong {
+.header-title {
+  font-size: 15px;
+  font-weight: 700;
   color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+}
+
+.header-score {
   font-family: var(--mono);
-  font-size: 12px;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 5px 12px;
+  border-radius: 8px;
+  color: var(--accent);
+  white-space: nowrap;
 }
 
-.exam-timer-line strong {
-  color: var(--text);
-  font-family: var(--mono);
-  font-size: 12px;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-
-.exam-timer-line.remain strong {
-  color: #ff6b9a;
-}
-
+/* ── 시험모드 빠른 이동 버튼 ── */
 .exam-nav-btn,
 .exam-submit-btn {
   display: inline-flex;
@@ -138,40 +130,6 @@
   background: var(--accent);
 }
 
-.btn-back {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: 1px solid var(--border);
-  color: var(--text2);
-  padding: 0;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 13px;
-  font-family: var(--font);
-  line-height: 1;
-  transition: all .15s;
-  white-space: nowrap;
-  min-width: 52px;
-  height: 32px;
-}
-
-.btn-back:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-.header-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-align: center;
-}
-
 #examModeQuickBtn {
   min-width: 114px;
   height: 32px;
@@ -182,21 +140,10 @@
   line-height: 1;
 }
 
-.header-score {
-  font-family: var(--mono);
-  font-size: 13px;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  padding: 5px 12px;
-  border-radius: 8px;
-  color: var(--accent);
-  white-space: nowrap;
-}
-
+/* ── 진행률 바 ── */
 .progress-bar-wrap {
   max-width: 760px;
   margin: 0.75rem auto 0;
-  min-height: 44px; /* Row 2 높이 통일 */
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -255,11 +202,85 @@ body.light-mode .progress-bar-wrap {
   flex-shrink: 0;
 }
 
-/* ── TAG NAV ── */
+body.light-mode .progress-label,
+body.light-mode .progress-label .p-part,
+body.light-mode .progress-label .p-total {
+  color: #0f172a;
+}
+
+/* ── 과목 네비 ── */
+.subject-nav-wrap {
+  max-width: 760px;
+  margin: 0.75rem auto 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.subject-nav {
+  display: flex;
+  gap: 8px;
+}
+
+.learn-reveal-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  user-select: none;
+  cursor: pointer;
+}
+
+.learn-reveal-toggle input {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--accent);
+}
+
+.learn-reveal-toggle.is-hidden {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.subject-nav-wrap.is-collapsed,
+.tag-nav-wrap.is-collapsed {
+  display: none;
+}
+
+.sub-nav-btn {
+  background: none;
+  border: none;
+  color: var(--text2);
+  font-size: 15px;
+  font-weight: 700;
+  padding: 4px 12px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: 0.2s;
+  font-family: var(--font);
+}
+
+.sub-nav-btn.active {
+  color: var(--accent);
+  background: rgba(0, 212, 255, 0.1);
+}
+
+.sub-nav-btn:hover {
+  color: var(--accent);
+}
+
+/* ── 태그 네비 ── */
 .tag-nav-wrap {
   max-width: 760px;
   margin: 0.6rem auto 0;
-  min-height: 52px; /* Row 3 높이 통일 */
   display: flex;
   align-items: center;
   overflow-x: auto;
@@ -326,6 +347,66 @@ body.light-mode .progress-bar-wrap {
   color: var(--text3);
 }
 
+/* ── 시험 타이머 ── */
+.exam-timer-box {
+  display: none;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-evenly;
+  gap: 8px 16px;
+  min-width: 170px;
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface2);
+  min-height: 52px;
+  margin-top: 0.6rem;
+  box-sizing: border-box;
+  transition: opacity 0.15s ease;
+}
+
+.exam-timer-box.visible {
+  display: flex;
+}
+
+.exam-timer-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--text2);
+  line-height: 1.3;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.exam-timer-line strong {
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.exam-timer-line.remain strong {
+  color: #ff6b9a;
+}
+
+.exam-progress-line {
+  color: var(--text2);
+}
+
+.exam-progress-line strong {
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 퀴즈 바디 ── */
 .quiz-body {
   flex: 1;
   padding: 1.5rem 1.2rem 3rem;

@@ -1,17 +1,19 @@
+/* ═══════════════════════════════════════════════
+   style.responsive.css  —  반응형 미디어 쿼리
+   ═══════════════════════════════════════════════ */
+
 @media (max-width: 768px) {
   :root {
-    --header-side-width: 82px; /* 112px에서 축소 */
+    --header-side-width: 82px;
   }
 
-  html {
-    font-size: 16px;
-  }
+  html { font-size: 16px; }
 
   .quiz-header {
     width: min(760px, calc(100% - 1.6rem));
     margin: 0 auto;
     box-sizing: border-box;
-    padding: 0.75rem 1rem; /* 데스크톱과 일치시킴 */
+    padding: 0.75rem 1rem;
   }
 
   .quiz-header-top {
@@ -44,7 +46,7 @@
     overflow: visible;
     text-overflow: clip;
     line-height: 1.35;
-    font-size: 19px; /* 20px에서 약간 축소하여 공간 확보 */
+    font-size: 19px;
     text-align: center;
     font-weight: 800;
   }
@@ -52,7 +54,7 @@
   .exam-timer-box {
     width: 100%;
     min-width: 0;
-    margin-top: 8px; /* 헤더-탑 바로 아래 마진 */
+    margin-top: 8px;
   }
 
   body.exam-layout-mode .exam-timer-box {
@@ -60,14 +62,14 @@
     grid-template-columns: 1fr 1fr;
     gap: 4px 12px;
     padding: 8px 12px;
-    margin-top: 0.6rem !important; /* Row 3 여백 통일 */
-    min-height: 52px; /* Row 3 높이 통일 */
+    margin-top: 0.6rem !important;
+    min-height: 52px;
   }
 
   body.exam-layout-mode .exam-timer-line.exam-progress-line {
-    grid-column: 1 / span 2; /* 파트/진도 정보는 아랫줄 전체 차지 */
+    grid-column: 1 / span 2;
     display: flex !important;
-    flex-direction: row; /* 일단은 가로로 하되 공간 부족시를 대비해 사이 거리 확보 */
+    flex-direction: row;
     justify-content: space-between;
     border-top: 1px solid rgba(255, 255, 255, 0.05);
     padding-top: 4px;
@@ -86,9 +88,8 @@
     margin-left: 0;
   }
 
-  .q-block {
-    padding: 1rem;
-  }
+  /* ── 문제 카드 모바일 ── */
+  .q-block { padding: 1rem; }
 
   .q-meta {
     gap: 6px;
@@ -97,13 +98,8 @@
     flex-wrap: nowrap;
   }
 
-  .q-reveal-slot {
-    margin-left: auto;
-  }
-
-  .q-type {
-    margin-left: 0;
-  }
+  .q-reveal-slot { margin-left: auto; }
+  .q-type        { margin-left: 0; }
 
   .q-search-actions,
   .q-inline-actions {
@@ -125,6 +121,7 @@
     gap: 6px;
   }
 
+  /* 시험모드 모바일 인라인 액션 */
   body.exam-layout-mode .q-inline-actions {
     width: 100%;
     margin-left: 0 !important;
@@ -158,10 +155,9 @@
     flex: 1;
   }
 
-  .q-search-actions {
-    justify-content: flex-end;
-  }
+  .q-search-actions  { justify-content: flex-end; }
 
+  /* 검색 버튼 아이콘 전용 */
   .q-search-btn.youtube,
   .q-search-btn.gemini {
     flex: 0 0 40px;
@@ -171,19 +167,16 @@
     border-radius: 9px;
   }
 
-  .q-search-label {
-    display: none;
-  }
+  .q-search-label { display: none; }
 
   .q-search-icon {
     width: 17px;
     height: 17px;
   }
 
-  .q-inline-actions .q-inline-submit {
-    margin-left: 0;
-  }
+  .q-inline-actions .q-inline-submit { margin-left: 0; }
 
+  /* ── 시험모드 모바일 레이아웃 ── */
   body.exam-layout-mode #quiz {
     flex-direction: column;
     align-items: center;
@@ -196,12 +189,12 @@
     border-right: none;
     border-bottom: 1px solid var(--border);
   }
-  
+
   body.exam-layout-mode .exam-mode-controls {
     flex-direction: row;
     justify-content: space-between;
   }
-  
+
   body.exam-layout-mode .quiz-body {
     align-self: center;
     margin: 0 auto;
@@ -232,19 +225,14 @@
     padding: 10px 8px;
   }
 
-  /* 모바일 스크롤/터치 시 의도치 않은 강조 제거 */
+  /* 터치 하이라이트 방지 */
   .q-block:active,
-  .option:active {
-    border-color: var(--border); /* 터치 중에도 기본 테두리 유지 */
-  }
+  .option:active { border-color: var(--border); }
 
-  .option.selected:active {
-    border-color: var(--accent); /* 선택된 상태면 선택색 유지 */
-  }
+  .option.selected:active { border-color: var(--accent); }
 }
 
-
-
+/* ── 480px 이하 ── */
 @media (max-width: 480px) {
   #home {
     padding: 1.05rem 0.9rem 1.3rem;
@@ -281,7 +269,5 @@
     box-shadow: 0 18px 44px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8);
   }
 
-  .home-title {
-    font-size: 1.94rem;
-  }
+  .home-title { font-size: 1.94rem; }
 }

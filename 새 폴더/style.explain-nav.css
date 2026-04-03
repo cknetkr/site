@@ -1,4 +1,7 @@
-/* ── 하단 해설 섹션 (카드 2 & 3) ── */
+/* ═══════════════════════════════════════════════
+   style.explain-nav.css  —  해설 섹션 카드 컴포넌트
+   ═══════════════════════════════════════════════ */
+
 .section-label {
   font-size: 12px;
   font-weight: 500;
@@ -117,22 +120,11 @@ hr.div {
   margin: 14px 0;
 }
 
-.tag-anchor-spacer {
-  display: block;
-  height: 0;
-}
+.tag-anchor-spacer { display: block; height: 0; }
 
-.opt-body {
-  flex: 1;
-}
+.step-inline-note { margin-bottom: 12px; }
 
-.step-inline-note {
-  margin-bottom: 12px;
-}
-
-.exp-card {
-  margin-top: 16px;
-}
+.exp-card { margin-top: 16px; }
 
 .review-perfect {
   padding: 8px 0;
@@ -140,77 +132,7 @@ hr.div {
   font-size: 14px;
 }
 
-/* ── SUBJECT NAV ── */
-.subject-nav-wrap {
-  max-width: 760px;
-  margin: 0.75rem auto 0; /* Row 2 여백 통일 */
-  min-height: 44px; /* Row 2 높이 통일 */
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border-bottom: 1px solid var(--border);
-}
-
-.subject-nav {
-  display: flex;
-  gap: 8px;
-}
-
-.learn-reveal-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
-  padding: 7px 10px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--surface2);
-  color: var(--text);
-  font-size: 12px;
-  font-weight: 700;
-  user-select: none;
-  cursor: pointer;
-}
-
-.learn-reveal-toggle.is-hidden {
-  visibility: hidden;
-  pointer-events: none;
-}
-
-.subject-nav-wrap.is-collapsed,
-.tag-nav-wrap.is-collapsed {
-  visibility: hidden;
-  pointer-events: none;
-}
-
-.learn-reveal-toggle input {
-  width: 14px;
-  height: 14px;
-  accent-color: var(--accent);
-}
-
-.sub-nav-btn {
-  background: none;
-  border: none;
-  color: var(--text2);
-  font-size: 15px;
-  font-weight: 700;
-  padding: 4px 12px;
-  cursor: pointer;
-  border-radius: 6px;
-  transition: 0.2s;
-  font-family: var(--font);
-}
-
-.sub-nav-btn.active {
-  color: var(--accent);
-  background: rgba(0, 212, 255, 0.1);
-}
-
-.sub-nav-btn:hover {
-  color: var(--accent);
-}
-
+/* ── 해설 선택지 행 ── */
 .exp-opt-row.is-ans {
   background: rgba(16, 185, 129, 0.07);
   border-left: 3px solid var(--green);
@@ -228,21 +150,12 @@ hr.div {
   margin-right: 6px;
 }
 
-.exp-opt-row.is-ans .exp-opt-num {
-  color: var(--green);
-}
+.exp-opt-row.is-ans .exp-opt-num        { color: var(--green); }
+.exp-opt-row.is-wrong-choice .exp-opt-num { color: var(--red); }
 
-.exp-opt-row.is-wrong-choice .exp-opt-num {
-  color: var(--red);
-}
-
-.exp-opt-label {
-  font-weight: 500;
-  color: var(--text);
-}
+.exp-opt-label { font-weight: 500; color: var(--text); }
 
 .exp-opt-why {
   color: var(--text2);
   margin-top: 3px;
 }
-

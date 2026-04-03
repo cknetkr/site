@@ -1,3 +1,8 @@
+/* ═══════════════════════════════════════════════
+   style.core.css  —  CSS 변수 · 리셋 · 공통 시스템
+   ═══════════════════════════════════════════════ */
+
+/* ── 다크모드 토큰 ── */
 :root {
   --bg: #060c1a;
   --surface: #111827;
@@ -49,6 +54,7 @@
   --mono: 'Space Mono', 'JetBrains Mono', monospace;
 }
 
+/* ── 라이트모드 토큰 ── */
 body.light-mode {
   --bg: #f5f7fb;
   --surface: #ffffff;
@@ -98,17 +104,18 @@ body.light-mode {
   --link-accent: #378add;
 }
 
+/* ── 리셋 ── */
 *,
 *::before,
 *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  -webkit-tap-highlight-color: transparent; /* 터치 하이라이트 제거 */
+  -webkit-tap-highlight-color: transparent;
 }
 
 *:focus {
-  outline: none; /* 기본 아웃라인 제거 */
+  outline: none;
 }
 
 html {
@@ -131,19 +138,71 @@ body::before {
   display: none;
 }
 
-.screen {
-  position: relative;
-  z-index: 1;
-}
-
-body.light-mode {
-  background: var(--header-bg);
-}
-
 body.light-mode::before {
   display: none;
 }
 
+/* ── 스크린 시스템 ── */
+.screen {
+  position: relative;
+  z-index: 1;
+  display: none;
+  min-height: 100vh;
+}
+
+.screen.active {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── 공용 버튼 ── */
+.btn-primary {
+  flex: 1;
+  padding: 13px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
+  color: #fff;
+  font-weight: 700;
+  font-size: 15px;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: opacity .15s;
+}
+
+.btn-primary:hover {
+  opacity: 0.88;
+}
+
+.btn-secondary {
+  flex: 1;
+  padding: 13px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: all .15s;
+}
+
+.btn-secondary:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.btn-secondary.compact {
+  display: inline-flex;
+  width: auto;
+  min-width: 140px;
+  padding: 7px 10px;
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+
+/* ── 테마 토글 ── */
 .theme-toggle {
   position: static;
   margin-top: 1.5rem;
@@ -165,14 +224,82 @@ body.light-mode::before {
   background: var(--surface2);
 }
 
-/* ── SCREEN SYSTEM ── */
-.screen {
+/* ── 에러 카드 ── */
+.error-card {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 12px;
+  padding: 1.2rem;
+  color: var(--red);
+  font-size: 14px;
+  text-align: center;
+  line-height: 1.7;
+}
+
+/* ── 제출 확인 모달 ── */
+.confirm-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
   display: none;
-  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
 }
 
-.screen.active {
+.confirm-modal.is-open {
   display: flex;
-  flex-direction: column;
 }
 
+.confirm-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(3, 8, 20, 0.62);
+  backdrop-filter: blur(2px);
+}
+
+.confirm-modal-card {
+  position: relative;
+  width: min(420px, calc(100vw - 32px));
+  background: linear-gradient(155deg, #0f172a 0%, #111d36 100%);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px 16px 14px;
+  box-shadow: 0 22px 48px rgba(0, 0, 0, 0.45);
+}
+
+.confirm-modal-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.confirm-modal-msg {
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--text2);
+  line-height: 1.55;
+}
+
+.confirm-modal-actions {
+  margin-top: 14px;
+  display: flex;
+  gap: 8px;
+}
+
+.confirm-modal-actions .btn-secondary,
+.confirm-modal-actions .btn-primary {
+  padding: 10px 12px;
+  font-size: 14px;
+  border-radius: 10px;
+}
+
+body.light-mode .confirm-modal-card {
+  background: linear-gradient(160deg, #ffffff 0%, #eef4ff 100%);
+  border-color: #b9cbe3;
+  box-shadow: 0 20px 44px rgba(23, 40, 66, 0.2);
+}
+
+body.light-mode .confirm-modal-backdrop {
+  background: rgba(32, 52, 88, 0.32);
+}

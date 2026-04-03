@@ -1,0 +1,196 @@
+/* ═══════════════════════════════════════════════
+   style.exam-controls.css  —  시험모드 레이아웃 오버라이드
+   ═══════════════════════════════════════════════ */
+
+/* ── 시험모드 전체 레이아웃 ── */
+body.exam-layout-mode #quiz {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0;
+}
+
+body.exam-layout-mode .quiz-header {
+  position: sticky;
+  top: 0;
+  left: auto;
+  width: min(760px, calc(100% - 24px));
+  height: auto;
+  max-width: 760px;
+  z-index: 100;
+  border-bottom: 1px solid var(--border);
+  border-right: none;
+  padding: 0.45rem 1.2rem;
+  margin: 0 auto;
+  overflow: visible;
+  background: var(--header-bg);
+  display: block;
+  box-sizing: border-box;
+}
+
+body.exam-layout-mode .quiz-header>div:not(.quiz-header-top):not(.exam-mode-controls):not(.is-collapsed) {
+  display: block;
+}
+
+/* 시험모드에서 불필요한 컨트롤 숨김 */
+body.exam-layout-mode .exam-mode-controls {
+  display: none !important;
+}
+
+body.exam-layout-mode .subject-nav-wrap.is-collapsed,
+body.exam-layout-mode .tag-nav-wrap.is-collapsed {
+  display: none !important;
+}
+
+body.exam-layout-mode .progress-label {
+  display: none;
+}
+
+/* ── 시험모드 헤더 버튼 크기 ── */
+body.exam-layout-mode .exam-nav-btn,
+body.exam-layout-mode .exam-submit-btn,
+body.exam-layout-mode .exam-reveal-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 44px;
+  padding: 0;
+  font-size: 13px;
+  line-height: 1;
+}
+
+/* ── 시험모드 바디 ── */
+body.exam-layout-mode .quiz-body {
+  align-self: center;
+  margin: 0 auto;
+  max-width: 760px;
+  width: min(760px, calc(100% - 24px));
+  min-height: 0;
+  padding: 1.5rem 1.2rem 3rem;
+  flex: initial;
+}
+
+body.exam-layout-mode .q-block {
+  max-width: 100%;
+}
+
+/* ── 시험모드 진행률/타이머 ── */
+body.exam-layout-mode .progress-bar-wrap {
+  width: min(760px, calc(100% - 24px));
+  margin: 0.25rem auto 0;
+}
+
+/* 타이머 박스: 기본 hidden, .visible 클래스로만 표시 */
+.exam-timer-box {
+  display: none;
+}
+
+.exam-timer-box.visible {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+}
+
+body.exam-layout-mode .exam-timer-box {
+  width: min(760px, calc(100% - 24px));
+  margin: 0.3rem auto 0;
+  padding: 3px 10px;
+}
+
+/* ── 시험모드 인라인 액션 ── */
+body.exam-layout-mode .q-inline-actions {
+  width: 100%;
+  margin-left: 0 !important;
+  margin-top: 20px;
+  justify-content: space-between;
+  flex-wrap: nowrap;
+}
+
+body.exam-layout-mode .q-inline-btn {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 8px;
+}
+
+body.exam-layout-mode .q-inline-reveal {
+  width: auto;
+  justify-content: center;
+  padding: 6px 10px;
+}
+
+body.exam-layout-mode .q-meta {
+  flex-wrap: wrap;
+  align-items: center;
+  row-gap: 6px;
+}
+
+body.exam-layout-mode .q-search-actions {
+  margin-left: auto;
+}
+
+/* ── 구 exam-controls (레거시, 미사용) ── */
+.exam-mode-toggle {
+  margin-left: auto;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 0.8rem 1rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.exam-mode-toggle.is-on {
+  background: var(--accent);
+  color: #04111f;
+  border-color: transparent;
+}
+
+.exam-mode-controls {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 1rem 1.2rem;
+}
+
+.exam-mode-controls.is-visible {
+  display: flex;
+}
+
+.exam-mode-status {
+  min-width: 110px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--accent);
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface2);
+}
+
+.exam-reveal-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+}
+
+.exam-reveal-toggle input {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--accent);
+}

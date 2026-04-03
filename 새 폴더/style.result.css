@@ -1,4 +1,9 @@
-/* ── RESULT ── */
+/* ═══════════════════════════════════════════════
+   style.result.css  —  결과 화면
+   (구 style.result.css + style.result-select.css + style.result-utils.css 통합)
+   ═══════════════════════════════════════════════ */
+
+/* ── 결과 화면 레이아웃 ── */
 #result {
   align-items: center;
   justify-content: center;
@@ -36,14 +41,10 @@
   margin-top: 6px;
 }
 
-.result-grade.pass {
-  color: var(--green);
-}
+.result-grade.pass { color: var(--green); }
+.result-grade.fail { color: var(--red); }
 
-.result-grade.fail {
-  color: var(--red);
-}
-
+/* ── 점수 원형 ── */
 .score-circle-wrap {
   display: flex;
   justify-content: center;
@@ -90,6 +91,7 @@
   font-family: var(--mono);
 }
 
+/* ── 통계 카드 ── */
 .result-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -112,23 +114,16 @@
   margin-bottom: 4px;
 }
 
-.stat-val.green {
-  color: var(--green);
-}
-
-.stat-val.red {
-  color: var(--red);
-}
-
-.stat-val.amber {
-  color: var(--amber);
-}
+.stat-val.green { color: var(--green); }
+.stat-val.red   { color: var(--red); }
+.stat-val.amber { color: var(--amber); }
 
 .stat-label {
   font-size: 12px;
   color: var(--text3);
 }
 
+/* ── 리뷰 섹션 ── */
 .result-review {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -159,6 +154,7 @@
   gap: 6px;
 }
 
+/* ── 취약 태그 ── */
 .weak-tag-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
@@ -172,17 +168,9 @@
   background: var(--surface2);
 }
 
-.weak-tag-card.low {
-  border-color: rgba(239, 68, 68, 0.55);
-}
-
-.weak-tag-card.mid {
-  border-color: rgba(245, 158, 11, 0.55);
-}
-
-.weak-tag-card.high {
-  border-color: rgba(16, 185, 129, 0.45);
-}
+.weak-tag-card.low  { border-color: rgba(239, 68, 68, 0.55); }
+.weak-tag-card.mid  { border-color: rgba(245, 158, 11, 0.55); }
+.weak-tag-card.high { border-color: rgba(16, 185, 129, 0.45); }
 
 .weak-tag-name {
   font-size: 13px;
@@ -196,6 +184,7 @@
   color: var(--text2);
 }
 
+/* ── 오답 노트 ── */
 .review-note-item {
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -225,9 +214,7 @@
   margin-top: 2px;
 }
 
-.review-note-line strong {
-  color: var(--text);
-}
+.review-note-line strong { color: var(--text); }
 
 .review-note-core {
   margin-top: 7px;
@@ -237,6 +224,7 @@
   color: var(--accent);
 }
 
+/* ── 리뷰 아이템 ── */
 .review-item {
   display: flex;
   align-items: flex-start;
@@ -247,9 +235,7 @@
   border-bottom: 1px solid var(--border);
 }
 
-.review-item:last-child {
-  border-bottom: none;
-}
+.review-item:last-child { border-bottom: none; }
 
 .review-num {
   font-family: var(--mono);
@@ -257,4 +243,33 @@
   color: var(--text3);
   min-width: 24px;
   margin-top: 2px;
+}
+
+.review-q {
+  flex: 1;
+  line-height: 1.5;
+}
+
+.review-mark {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.review-mark.wrong {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+}
+
+.review-mark.skip {
+  background: rgba(245, 158, 11, 0.17);
+  color: #fbbf24;
+}
+
+/* ── 결과 버튼 ── */
+.result-btns {
+  display: flex;
+  gap: 10px;
 }

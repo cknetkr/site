@@ -1,113 +1,68 @@
 /* ────────────────────────────────────────────
-   반도체설비보전기능사 모의고사 · app.js
-  홈에서 '모의고사 만들기'를 누르면
-  파트 문제은행을 조합해 60문항을 생성합니다.
+   반도체설비보전기능사 모의고사 · app.main.js (v2)
+   모드 전환: quizHeader.dataset.mode = 'learn' | 'exam'
+   body 클래스 기반 CSS 충돌 구조 완전 제거
 ──────────────────────────────────────────── */
 
-const PARTS_INDEX_FILE = 'data/parts.json';
+const PARTS_INDEX_FILE     = 'data/parts.json';
 const TARGET_QUESTION_COUNT = 60;
-const BASE_PICK_PER_TAG = 3;
+const BASE_PICK_PER_TAG     = 3;
 const EXAM_DURATION_SECONDS = 60 * 60;
-const SUBJECT_PART_RANGES = [
-  [1, 6],
-  [7, 11],
-  [12, 16]
-];
+const SUBJECT_PART_RANGES   = [[1,6],[7,11],[12,16]];
+const THEME_KEY             = 'exam-site-theme';
 
-/* ── 상태 ── */
-let curQuestions = [];
-let chosen = [];
-let answered = [];
-let examMode = false;
-let examCursor = 0;
-let examRevealMode = false;
-let learnRevealMode = true;
-let examScopeIndices = [];
+let curQuestions        = [];
+let chosen              = [];
+let answered            = [];
+let examMode            = false;
+let examCursor          = 0;
+let examRevealMode      = false;
+let learnRevealMode     = true;
+let examScopeIndices    = [];
 let latestWrongNoteText = '';
-let currentExamLabel = '';
-let currentMode = 'learn';
-let selectedSubjectIdx = -1;
+let currentExamLabel    = '';
+let currentMode         = 'learn';
+let selectedSubjectIdx  = -1;
 let selectedPartIndices = [];
-let partsMetadata = [];
-let examTimerSecondsLeft = EXAM_DURATION_SECONDS;
-let examTimerIntervalId = null;
-const THEME_KEY = 'exam-site-theme';
-let partsIndexCache = null;
-let partsMetadataCache = null;
-let partBanksCache = null;
-const partBankByIndexCache = new Map();
+let partsMetadata       = [];
+let examTimerSecondsLeft  = EXAM_DURATION_SECONDS;
+let examTimerIntervalId   = null;
 let submitConfirmResolver = null;
+let partsIndexCache       = null;
+let partsMetadataCache    = null;
+let partBanksCache        = null;
+const partBankByIndexCache = new Map();
 
+/* ── 유틸 ── */
 function formatDuration(sec) {
-  const safe = Math.max(0, Number(sec) || 0);
-  const h = Math.floor(safe / 3600);
-  const m = Math.floor((safe % 3600) / 60);
-  const s = safe % 60;
-  return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  const s = Math.max(0, Number(sec) || 0);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const r = s % 60;
+  return `${h}:${String(m).padStart(2,'0')}:${String(r).padStart(2,'0')}`;
+}
+function escapeHtml(v) {
+  return String(v ?? '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function extractKeywords(text, maxCount=4) {
+  const stop = new Set(['무엇','무엇이','무엇을','무엇은','어떤','어느','가장','다음','관련','경우','상황','위한','대한','에서','으로','한다','된다']);
+  const tokens = String(text||'').replace(/[()\[\]{}?.,!~:;·/\\-]/g,' ')
+    .split(/\s+/).map(t=>t.trim()).filter(t=>t.length>=2&&!stop.has(t));
+  return [...new Set(tokens)].slice(0,maxCount).join(' ');
 }
 
-function stopExamTimer() {
-  if (examTimerIntervalId) {
-    clearInterval(examTimerIntervalId);
-    examTimerIntervalId = null;
-  }
-}
-
-function updateExamTimerUI() {
-  const totalEl = document.getElementById('examTotalTime');
-  const remainEl = document.getElementById('examRemainTime');
-  if (!examMode) {
-    const frozenTime = formatDuration(EXAM_DURATION_SECONDS);
-    if (totalEl) totalEl.textContent = frozenTime;
-    if (remainEl) remainEl.textContent = frozenTime;
-    return;
-  }
-  if (totalEl) totalEl.textContent = formatDuration(EXAM_DURATION_SECONDS);
-  if (remainEl) remainEl.textContent = formatDuration(examTimerSecondsLeft);
-}
-
-function resetExamTimer() {
-  examTimerSecondsLeft = EXAM_DURATION_SECONDS;
-  updateExamTimerUI();
-}
-
-function startExamTimer() {
-  stopExamTimer();
-  updateExamTimerUI();
-  examTimerIntervalId = setInterval(() => {
-    if (!examMode) {
-      stopExamTimer();
-      return;
-    }
-
-    examTimerSecondsLeft -= 1;
-    if (examTimerSecondsLeft <= 0) {
-      examTimerSecondsLeft = 0;
-      updateExamTimerUI();
-      stopExamTimer();
-      submitExamMode({ skipConfirm: true });
-      return;
-    }
-
-    updateExamTimerUI();
-  }, 1000);
-}
-
+/* ── 테마 ── */
 function applyTheme(theme) {
-  const isLight = theme === 'light';
-  document.body.classList.toggle('light-mode', isLight);
+  document.body.classList.toggle('light-mode', theme==='light');
   const btn = document.getElementById('themeToggle');
-  if (btn) {
-    btn.textContent = isLight ? '다크 모드' : '화이트 모드';
-  }
+  if (btn) btn.textContent = theme==='light' ? '다크 모드' : '화이트 모드';
 }
-
 function initThemeToggle() {
   const btn = document.getElementById('themeToggle');
-  const saved = localStorage.getItem(THEME_KEY) || 'dark';
-  applyTheme(saved);
+  applyTheme(localStorage.getItem(THEME_KEY)||'dark');
   if (!btn) return;
-
   btn.addEventListener('click', () => {
     const next = document.body.classList.contains('light-mode') ? 'dark' : 'light';
     localStorage.setItem(THEME_KEY, next);
@@ -117,1505 +72,592 @@ function initThemeToggle() {
 
 /* ── 화면 전환 ── */
 function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  window.scrollTo(0, 0);
+  window.scrollTo(0,0);
 }
 
-/* ── 시험모드 제어 ── */
-function updateExamModeUI() {
-  const modeBtn = document.getElementById('examModeQuickBtn');
-  const timerBox = document.getElementById('examTimerBox');
-  const titleEl = document.getElementById('hTitle');
-  const learnWrap = document.getElementById('learnRevealToggleWrap');
-  const learnToggle = document.getElementById('learnRevealToggle');
-  const subjectWrap = document.querySelector('.subject-nav-wrap');
-  const tagWrap = document.querySelector('.tag-nav-wrap');
-  const progressWrap = document.querySelector('.progress-bar-wrap');
-  const inlineActions = document.querySelectorAll('.q-inline-actions');
-  const revealSlots = document.querySelectorAll('.q-reveal-slot');
-  const inlineRevealInputs = document.querySelectorAll('.q-inline-reveal-input');
-  const inlinePrevBtns = document.querySelectorAll('.q-inline-prev');
-  const inlineNextBtns = document.querySelectorAll('.q-inline-next');
-
-  document.body.classList.toggle('exam-layout-mode', examMode);
-
-  if (modeBtn) {
-    modeBtn.style.display = 'block';
-    modeBtn.textContent = examMode ? '학습모드 가기' : '시험모드 가기';
-  }
-  if (titleEl) {
-    titleEl.textContent = examMode ? '시험모드' : '학습모드';
-  }
-
-  /* ── 핵심 수정: display 토글 → visibility 토글 ── */
-  if (timerBox) {
-    timerBox.style.display = examMode ? 'flex' : 'none';
-    if (examMode) {
-      timerBox.classList.add('visible');
-    } else {
-      timerBox.classList.remove('visible');
+/* ── 타이머 ── */
+function stopExamTimer() {
+  if (examTimerIntervalId) { clearInterval(examTimerIntervalId); examTimerIntervalId=null; }
+}
+function updateTimerUI() {
+  const t = document.getElementById('examTotalTime');
+  const r = document.getElementById('examRemainTime');
+  if (t) t.textContent = formatDuration(EXAM_DURATION_SECONDS);
+  if (r) r.textContent = formatDuration(examMode ? examTimerSecondsLeft : EXAM_DURATION_SECONDS);
+}
+function resetExamTimer() { examTimerSecondsLeft = EXAM_DURATION_SECONDS; updateTimerUI(); }
+function startExamTimer() {
+  stopExamTimer(); updateTimerUI();
+  examTimerIntervalId = setInterval(() => {
+    if (!examMode) { stopExamTimer(); return; }
+    examTimerSecondsLeft--;
+    if (examTimerSecondsLeft <= 0) {
+      examTimerSecondsLeft=0; updateTimerUI(); stopExamTimer();
+      submitExamMode({skipConfirm:true}); return;
     }
-    timerBox.classList.remove('is-learn');
-  }
+    updateTimerUI();
+  }, 1000);
+}
 
-  inlineActions.forEach(el => {
-    el.style.display = examMode ? 'flex' : 'none';
-  });
-  revealSlots.forEach(el => {
-    el.style.display = examMode ? 'inline-flex' : 'none';
-  });
-  inlineRevealInputs.forEach(input => {
-    input.checked = examRevealMode;
-    input.disabled = !examMode;
-  });
+/* ══════════════════════════════════════
+   핵심: 모드 전환
+   data-mode 속성 하나로 CSS가 표시/숨김 전담
+   body 클래스 방식 완전 제거 → specificity 충돌 없음
+══════════════════════════════════════ */
+function setHeaderMode(mode) {
+  const h = document.getElementById('quizHeader');
+  if (h) h.dataset.mode = mode;
+}
 
-  if (subjectWrap) subjectWrap.classList.toggle('is-collapsed', examMode);
-  if (tagWrap) tagWrap.classList.toggle('is-collapsed', examMode);
-  if (progressWrap) progressWrap.style.display = 'block';
+function updateExamModeUI() {
+  const modeBtn      = document.getElementById('modeToggleBtn');
+  const titleEl      = document.getElementById('hTitle');
+  const learnWrap    = document.getElementById('learnRevealToggleWrap');
+  const learnToggle  = document.getElementById('learnRevealToggle');
+  const inlineActions      = document.querySelectorAll('.q-inline-actions');
+  const revealSlots        = document.querySelectorAll('.q-reveal-slot');
+  const inlineRevealInputs = document.querySelectorAll('.q-inline-reveal-input');
+  const prevBtns           = document.querySelectorAll('.q-inline-prev');
+  const nextBtns           = document.querySelectorAll('.q-inline-next');
+
+  setHeaderMode(examMode ? 'exam' : 'learn');
+
+  if (modeBtn) modeBtn.textContent = examMode ? '학습모드 가기' : '시험모드 가기';
+  if (titleEl) titleEl.textContent = examMode ? '시험모드' : '학습모드';
+
+  inlineActions.forEach(el => el.classList.toggle('is-visible', examMode));
+  revealSlots.forEach(el => el.classList.toggle('is-visible', examMode));
+  inlineRevealInputs.forEach(inp => { inp.checked=examRevealMode; inp.disabled=!examMode; });
 
   if (examMode) {
-    const scope = examScopeIndices.length ? examScopeIndices : curQuestions.map((_, i) => i);
-    const total = scope.length || 0;
-    inlinePrevBtns.forEach(btn => {
-      btn.disabled = examCursor <= 0;
-    });
-    inlineNextBtns.forEach(btn => {
-      btn.disabled = examCursor >= total - 1;
-    });
+    const total = (examScopeIndices.length||curQuestions.length);
+    prevBtns.forEach(b => { b.disabled = examCursor<=0; });
+    nextBtns.forEach(b => { b.disabled = examCursor>=total-1; });
   }
 
-  if (learnWrap) {
-    const showLearnToggle = currentMode === 'learn' && !examMode;
-    learnWrap.classList.toggle('is-hidden', !showLearnToggle);
-  }
-  if (learnToggle) {
-    learnToggle.checked = learnRevealMode;
-    learnToggle.disabled = currentMode !== 'learn' || examMode;
-  }
+  if (learnWrap) learnWrap.classList.toggle('is-hidden', examMode||currentMode!=='learn');
+  if (learnToggle) { learnToggle.checked=learnRevealMode; learnToggle.disabled=examMode||currentMode!=='learn'; }
 
-  updateExamTimerUI();
+  updateTimerUI();
+  updateProgress();
 }
 
+/* ── 선택지 뷰 ── */
 function clearOptionExplanation(qi) {
   const exp = document.getElementById(`exp${qi}`);
-  if (exp) exp.innerHTML = '';
-
-  for (let i = 0; i < 4; i++) {
-    const wrap = document.getElementById(`optWrap${qi}_${i}`);
-    const desc = document.getElementById(`optDesc${qi}_${i}`);
-    const trap = document.getElementById(`optTrap${qi}_${i}`);
-    const corr = document.getElementById(`optCorr${qi}_${i}`);
-
-    if (wrap) {
-      wrap.classList.remove('correct', 'wrong', 'locked', 'show-desc');
-    }
-    if (desc) desc.innerHTML = '';
-    if (trap) {
-      trap.innerHTML = '';
-      trap.classList.remove('is-visible');
-    }
-    if (corr) corr.classList.remove('is-visible');
+  if (exp) exp.innerHTML='';
+  for (let i=0;i<4;i++) {
+    document.getElementById(`optWrap${qi}_${i}`)?.classList.remove('correct','wrong','locked','show-desc');
+    const desc=document.getElementById(`optDesc${qi}_${i}`); if(desc) desc.innerHTML='';
+    const trap=document.getElementById(`optTrap${qi}_${i}`); if(trap){trap.innerHTML='';trap.classList.remove('is-visible');}
+    document.getElementById(`optCorr${qi}_${i}`)?.classList.remove('is-visible');
   }
 }
 
 function applyExamSelectionView(qi) {
-  const q = curQuestions[qi];
-  if (!q) return;
-  const picked = chosen[qi];
-
-  for (let i = 0; i < 4; i++) {
-    const wrap = document.getElementById(`optWrap${qi}_${i}`);
-    if (!wrap) continue;
-    wrap.classList.remove('selected', 'correct', 'wrong', 'locked', 'exam-picked');
-    if (i === picked) wrap.classList.add('selected', 'exam-picked');
+  const q=curQuestions[qi]; if(!q) return;
+  const picked=chosen[qi];
+  for (let i=0;i<4;i++) {
+    const w=document.getElementById(`optWrap${qi}_${i}`); if(!w) continue;
+    w.classList.remove('selected','correct','wrong','locked','exam-picked');
+    if(i===picked) w.classList.add('selected','exam-picked');
   }
-
-  if (!examRevealMode || picked < 0) {
-    clearOptionExplanation(qi);
-    return;
-  }
-
-  for (let i = 0; i < 4; i++) {
-    const wrap = document.getElementById(`optWrap${qi}_${i}`);
-    if (!wrap) continue;
-    wrap.classList.add('locked');
-    if (i === q.ans) wrap.classList.add('correct');
-    else if (i === picked) wrap.classList.add('wrong');
+  if (!examRevealMode||picked<0) { clearOptionExplanation(qi); return; }
+  for (let i=0;i<4;i++) {
+    const w=document.getElementById(`optWrap${qi}_${i}`); if(!w) continue;
+    w.classList.add('locked');
+    if(i===q.ans) w.classList.add('correct');
+    else if(i===picked) w.classList.add('wrong');
   }
   showExplanation(qi);
-}
-
-function toggleExamRevealMode() {
-  const revealToggle = document.getElementById('examRevealToggle');
-  examRevealMode = !!revealToggle?.checked;
-  document.querySelectorAll('.q-inline-reveal-input').forEach(input => {
-    input.checked = examRevealMode;
-  });
-  if (examMode) {
-    const scope = examScopeIndices.length ? examScopeIndices : curQuestions.map((_, i) => i);
-    const activeIdx = scope[Math.min(examCursor, Math.max(scope.length - 1, 0))] ?? 0;
-    applyExamSelectionView(activeIdx);
-  }
-}
-
-function toggleExamRevealModeInline(checked) {
-  examRevealMode = !!checked;
-  const revealToggle = document.getElementById('examRevealToggle');
-  if (revealToggle) revealToggle.checked = examRevealMode;
-  document.querySelectorAll('.q-inline-reveal-input').forEach(input => {
-    input.checked = examRevealMode;
-  });
-  if (examMode) {
-    const scope = examScopeIndices.length ? examScopeIndices : curQuestions.map((_, i) => i);
-    const activeIdx = scope[Math.min(examCursor, Math.max(scope.length - 1, 0))] ?? 0;
-    applyExamSelectionView(activeIdx);
-  }
 }
 
 function applyLearnSelectionView(qi) {
-  const q = curQuestions[qi];
-  if (!q) return;
-  const picked = chosen[qi];
-  const hasAnswered = answered[qi] && picked >= 0;
-
+  const q=curQuestions[qi]; if(!q) return;
+  const picked=chosen[qi]; const hasAns=answered[qi]&&picked>=0;
   clearOptionExplanation(qi);
-
-  for (let i = 0; i < 4; i++) {
-    const wrap = document.getElementById(`optWrap${qi}_${i}`);
-    if (!wrap) continue;
-    wrap.classList.remove('selected', 'correct', 'wrong', 'locked', 'exam-picked');
-    if (i === picked) wrap.classList.add('selected');
-    if (hasAnswered) wrap.classList.add('locked');
+  for (let i=0;i<4;i++) {
+    const w=document.getElementById(`optWrap${qi}_${i}`); if(!w) continue;
+    w.classList.remove('selected','correct','wrong','locked','exam-picked');
+    if(i===picked) w.classList.add('selected');
+    if(hasAns) w.classList.add('locked');
   }
-
-  if (!hasAnswered || !learnRevealMode) return;
-
-  for (let i = 0; i < 4; i++) {
-    const wrap = document.getElementById(`optWrap${qi}_${i}`);
-    if (!wrap) continue;
-    if (i === q.ans) wrap.classList.add('correct');
-    else if (i === picked) wrap.classList.add('wrong');
+  if (!hasAns||!learnRevealMode) return;
+  for (let i=0;i<4;i++) {
+    const w=document.getElementById(`optWrap${qi}_${i}`); if(!w) continue;
+    if(i===q.ans) w.classList.add('correct');
+    else if(i===picked) w.classList.add('wrong');
   }
-
   showExplanation(qi);
 }
 
-function refreshLearnRevealView() {
-  for (let i = 0; i < curQuestions.length; i++) {
-    applyLearnSelectionView(i);
-  }
+function refreshLearnRevealView() { for(let i=0;i<curQuestions.length;i++) applyLearnSelectionView(i); }
+function toggleLearnRevealMode() { learnRevealMode=!!document.getElementById('learnRevealToggle')?.checked; if(currentMode==='learn') refreshLearnRevealView(); }
+function toggleExamRevealModeInline(checked) {
+  examRevealMode=!!checked;
+  document.querySelectorAll('.q-inline-reveal-input').forEach(inp=>{inp.checked=examRevealMode;});
+  if(examMode){const scope=examScopeIndices.length?examScopeIndices:curQuestions.map((_,i)=>i); applyExamSelectionView(scope[Math.min(examCursor,scope.length-1)]??0);}
 }
 
-function toggleLearnRevealMode() {
-  const learnToggle = document.getElementById('learnRevealToggle');
-  learnRevealMode = !!learnToggle?.checked;
-  if (currentMode === 'learn') refreshLearnRevealView();
-}
-
+/* ── 시험모드 이동 ── */
 function syncExamModeQuestionView() {
   updateExamModeUI();
-
   if (!examMode) {
-    const activeSubjectBtn = document.querySelector('.sub-nav-btn.active');
-    const activeIdx = activeSubjectBtn
-      ? Array.from(document.querySelectorAll('.sub-nav-btn')).indexOf(activeSubjectBtn)
-      : 0;
-    switchSubject(Math.max(activeIdx, 0));
+    const ab=document.querySelector('.sub-nav-btn.active');
+    switchSubject(ab ? Array.from(document.querySelectorAll('.sub-nav-btn')).indexOf(ab) : 0);
     return;
   }
-
-  const scope = examScopeIndices.length ? examScopeIndices : curQuestions.map((_, i) => i);
-  const safeCursor = Math.min(examCursor, Math.max(scope.length - 1, 0));
-  const activeIdx = scope[safeCursor] ?? 0;
-  examCursor = safeCursor;
-
-  document.querySelectorAll('.q-block').forEach((qb, idx) => {
-    qb.style.display = idx === activeIdx ? 'block' : 'none';
-  });
-
-  applyExamSelectionView(activeIdx);
-
-  requestAnimationFrame(() => {
-    const target = document.getElementById(`qb${activeIdx}`);
-    if (target) {
-      const header = document.querySelector('.quiz-header');
-      const offset = header ? header.offsetHeight + 8 : 80;
-      const top = target.getBoundingClientRect().top + window.scrollY - offset;
-      window.scrollTo({ top: Math.max(0, top), behavior: 'auto' });
-    } else if (scope.length) {
-      const first = document.getElementById(`qb${scope[0]}`);
-      if (first) first.style.display = 'block';
-    }
-  });
+  const scope=examScopeIndices.length?examScopeIndices:curQuestions.map((_,i)=>i);
+  const safe=Math.min(examCursor,Math.max(scope.length-1,0));
+  const idx=scope[safe]??0;
+  examCursor=safe;
+  document.querySelectorAll('.q-block').forEach((b,i)=>{ b.style.display=i===idx?'block':'none'; });
+  applyExamSelectionView(idx);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    const t=document.getElementById(`qb${idx}`);
+    if(t){const h=document.querySelector('.quiz-header'); const off=h?h.offsetHeight+8:80; window.scrollTo({top:Math.max(0,t.getBoundingClientRect().top+window.scrollY-off),behavior:'auto'});}
+  }));
 }
 
 function moveExamQuestion(delta) {
-  if (!examMode) return;
-  const total = examScopeIndices.length ? examScopeIndices.length : curQuestions.length;
-  const next = examCursor + delta;
-  if (next < 0 || next >= total) return;
-  examCursor = next;
-  syncExamModeQuestionView();
+  if(!examMode) return;
+  const total=examScopeIndices.length||curQuestions.length;
+  const next=examCursor+delta;
+  if(next<0||next>=total) return;
+  examCursor=next; syncExamModeQuestionView();
 }
 
-function closeSubmitConfirmModal(confirmed) {
-  const modal = document.getElementById('submitConfirmModal');
-  if (modal) {
-    modal.classList.remove('is-open');
-    modal.setAttribute('aria-hidden', 'true');
-  }
-
-  const resolver = submitConfirmResolver;
-  submitConfirmResolver = null;
-  if (resolver) resolver(!!confirmed);
-}
-
-function openSubmitConfirmModal() {
-  const modal = document.getElementById('submitConfirmModal');
-  if (!modal) return Promise.resolve(window.confirm('시험을 종료하고 제출할까요?'));
-
-  modal.classList.add('is-open');
-  modal.setAttribute('aria-hidden', 'false');
-
-  return new Promise(resolve => {
-    submitConfirmResolver = resolve;
-  });
-}
-
-async function submitExamMode(options = {}) {
-  const { skipConfirm = false } = options;
-  if (!examMode) return;
-
-  if (!skipConfirm) {
-    const ok = await openSubmitConfirmModal();
-    if (!ok) return;
-  }
-
-  stopExamTimer();
-  showResult();
-}
-
+/* ── 모드 전환 ── */
 function toggleExamMode() {
-  if (!curQuestions.length) return;
-  examMode = !examMode;
-  examCursor = 0;
-  if (!examMode) {
-    stopExamTimer();
-    examRevealMode = false;
-    examScopeIndices = [];
-  } else {
-    examScopeIndices = curQuestions.map((_, i) => i);
-    resetExamTimer();
-    startExamTimer();
-  }
+  if(!curQuestions.length) return;
+  examMode=!examMode; examCursor=0;
+  if(!examMode){stopExamTimer();examRevealMode=false;examScopeIndices=[];}
+  else{examScopeIndices=curQuestions.map((_,i)=>i);resetExamTimer();startExamTimer();}
   syncExamModeQuestionView();
 }
 
-function bindExamModeControls() {
-  const modeBtn = document.getElementById('examModeQuickBtn');
-  const prevBtn = document.getElementById('examPrevBtn');
-  const nextBtn = document.getElementById('examNextBtn');
-  const submitBtn = document.getElementById('examSubmitBtn');
-  const learnToggle = document.getElementById('learnRevealToggle');
-  const quizBody = document.getElementById('quizBody');
-
-  if (modeBtn) modeBtn.addEventListener('click', toggleExamMode);
-  if (prevBtn) prevBtn.addEventListener('click', () => moveExamQuestion(-1));
-  if (nextBtn) nextBtn.addEventListener('click', () => moveExamQuestion(1));
-  if (submitBtn) submitBtn.addEventListener('click', submitExamMode);
-  if (learnToggle) learnToggle.addEventListener('change', toggleLearnRevealMode);
-
-  const modal = document.getElementById('submitConfirmModal');
-  const confirmOk = document.getElementById('submitConfirmOk');
-  const confirmCancel = document.getElementById('submitConfirmCancel');
-  const backdrop = modal ? modal.querySelector('[data-close="1"]') : null;
-
-  if (confirmOk) confirmOk.addEventListener('click', () => closeSubmitConfirmModal(true));
-  if (confirmCancel) confirmCancel.addEventListener('click', () => closeSubmitConfirmModal(false));
-  if (backdrop) backdrop.addEventListener('click', () => closeSubmitConfirmModal(false));
-
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && submitConfirmResolver) {
-      closeSubmitConfirmModal(false);
-    }
-  });
-
-  let startX = 0;
-  let isDragging = false;
-
-  if (quizBody) {
-    quizBody.addEventListener('touchstart', e => {
-      startX = e.changedTouches[0].screenX;
-      isDragging = true;
-    }, false);
-
-    quizBody.addEventListener('touchend', e => {
-      if (!isDragging) return;
-      const endX = e.changedTouches[0].screenX;
-      handleGesture(startX, endX);
-      isDragging = false;
-    }, false);
-
-    quizBody.addEventListener('mousedown', e => {
-      startX = e.screenX;
-      isDragging = true;
-    }, false);
-
-    quizBody.addEventListener('mouseup', e => {
-      if (!isDragging) return;
-      const endX = e.screenX;
-      handleGesture(startX, endX);
-      isDragging = false;
-    }, false);
-
-    quizBody.addEventListener('mouseleave', () => {
-      isDragging = false;
-    }, false);
-  }
-
-  function handleGesture(startX, endX) {
-    const swipeThreshold = 40;
-    const diff = startX - endX;
-
-    if (Math.abs(diff) > swipeThreshold) {
-      if (diff > 0) {
-        moveExamQuestion(1);
-      } else {
-        moveExamQuestion(-1);
-      }
-    }
-  }
-
-  updateExamModeUI();
+/* ── 제출 모달 ── */
+function openSubmitConfirmModal() {
+  const m=document.getElementById('submitConfirmModal');
+  if(!m) return Promise.resolve(window.confirm('시험을 종료하고 제출할까요?'));
+  m.classList.add('is-open');
+  return new Promise(r=>{submitConfirmResolver=r;});
+}
+function closeSubmitConfirmModal(confirmed) {
+  document.getElementById('submitConfirmModal')?.classList.remove('is-open');
+  const r=submitConfirmResolver; submitConfirmResolver=null; if(r) r(!!confirmed);
+}
+async function submitExamMode(opts={}) {
+  if(!examMode) return;
+  if(!opts.skipConfirm){const ok=await openSubmitConfirmModal();if(!ok) return;}
+  stopExamTimer(); showResult();
 }
 
-
-
-function createRng(seed) {
-  let state = (seed >>> 0) || 1;
-  return () => {
-    state = (1664525 * state + 1013904223) >>> 0;
-    return state / 0x100000000;
-  };
-}
-
-function shuffleWithRng(arr, rng) {
-  const copy = [...arr];
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
-}
-
-function cloneQuestionWithShuffledOptions(question, rng) {
-  const next = JSON.parse(JSON.stringify(question));
-  if (!Array.isArray(next.opts) || next.opts.length !== 4) return next;
-
-  const mapped = next.opts.map((text, original) => ({ text, original }));
-  const shuffled = shuffleWithRng(mapped, rng);
-  next.opts = shuffled.map(item => item.text);
-  next.ans = shuffled.findIndex(item => item.original === question.ans);
-
-  if (Array.isArray(question.optWhy)) {
-    next.optWhy = shuffled.map(item => question.optWhy[item.original]);
-  }
-  if (next.explainV2 && Array.isArray(question.explainV2?.options)) {
-    next.explainV2.options = shuffled.map(item => question.explainV2.options[item.original]);
-  }
-  return next;
-}
-
-function pickMany(items, count, rng) {
-  if (count <= 0) return [];
-  return shuffleWithRng(items, rng).slice(0, Math.min(count, items.length));
-}
-
-function getSubjectIndexByPartNo(partNo) {
-  for (let i = 0; i < SUBJECT_PART_RANGES.length; i++) {
-    const [start, end] = SUBJECT_PART_RANGES[i];
-    if (partNo >= start && partNo <= end) return i;
-  }
-  return -1;
-}
-
-async function loadPartsIndex() {
-  if (partsIndexCache) return partsIndexCache;
-
-  partsIndexCache = (async () => {
-    const res = await fetch(PARTS_INDEX_FILE);
-    if (!res.ok) throw new Error(`parts.json 로드 실패 (HTTP ${res.status})`);
-    const partsIndex = await res.json();
-    const parts = Array.isArray(partsIndex?.parts) ? partsIndex.parts : [];
-    if (!parts.length) throw new Error('parts.json에 파트 목록이 없습니다.');
-    return partsIndex;
-  })();
-
-  try {
-    return await partsIndexCache;
-  } catch (e) {
-    partsIndexCache = null;
-    throw e;
-  }
-}
-
-async function loadPartBanks(options = {}) {
-  const { onlyIndices = null, forceReload = false } = options;
-  const normalizedIndices = Array.isArray(onlyIndices) && onlyIndices.length
-    ? [...new Set(onlyIndices
-      .map(n => Number(n))
-      .filter(n => Number.isInteger(n) && n >= 0))].sort((a, b) => a - b)
-    : null;
-
-  if (!forceReload && !normalizedIndices && partBanksCache) {
-    return partBanksCache;
-  }
-
-  const loader = (async () => {
-    const partsIndex = await loadPartsIndex();
-    const parts = Array.isArray(partsIndex?.parts) ? partsIndex.parts : [];
-
-    const targets = normalizedIndices
-      ? normalizedIndices
-        .map(sourceIndex => ({ part: parts[sourceIndex], sourceIndex }))
-        .filter(item => !!item.part)
-      : parts.map((part, sourceIndex) => ({ part, sourceIndex }));
-
-    const jobs = targets.map(async ({ part, sourceIndex }) => {
-      if (!forceReload && partBankByIndexCache.has(sourceIndex)) {
-        return partBankByIndexCache.get(sourceIndex);
-      }
-
-      const file = part.file;
-      const tag = part.tag || '미분류';
-      if (!file) return null;
-
-      const partNoMatch = file.match(/part(\d+)\.json$/);
-      const partNo = partNoMatch ? Number(partNoMatch[1]) : NaN;
-      const subjectIndex = Number.isFinite(partNo) ? getSubjectIndexByPartNo(partNo) : -1;
-      if (subjectIndex < 0) return null;
-
-      const partRes = await fetch(file);
-      if (!partRes.ok) throw new Error(`${file} 로드 실패 (HTTP ${partRes.status})`);
-
-      const partJson = await partRes.json();
-      const questions = Array.isArray(partJson?.questions) ? partJson.questions : [];
-      if (!questions.length) return null;
-
-      const bank = { tag, partNo, subjectIndex, questions, sourceIndex };
-      partBankByIndexCache.set(sourceIndex, bank);
-      return bank;
-    });
-
-    const banks = (await Promise.all(jobs)).filter(Boolean);
-    if (!banks.length) throw new Error('문제은행이 비어 있습니다.');
-    return banks;
-  })();
-
-  if (!forceReload && !normalizedIndices) {
-    partBanksCache = loader;
-    try {
-      return await partBanksCache;
-    } catch (e) {
-      partBanksCache = null;
-      throw e;
-    }
-  }
-
-  return loader;
-}
-
-function buildGeneratedExam(banks) {
-  const seed = Date.now();
-  const rng = createRng(seed);
-  const subjectPools = [[], [], []];
-
-  banks.forEach(bank => {
-    const sIdx = bank.subjectIndex;
-    if (sIdx < 0 || sIdx > 2) return;
-    subjectPools[sIdx].push({
-      tag: bank.tag,
-      partNo: bank.partNo,
-      questions: shuffleWithRng(bank.questions, rng)
-    });
-  });
-
-  const finalQuestions = [];
-  for (let sIdx = 0; sIdx < 3; sIdx++) {
-    const selected = [];
-    const used = new Set();
-    const pools = subjectPools[sIdx];
-
-    pools.forEach(pool => {
-      const basePick = pickMany(pool.questions, BASE_PICK_PER_TAG, rng);
-      basePick.forEach(q => {
-        const key = `${pool.tag}|${q.q}`;
-        if (used.has(key)) return;
-        used.add(key);
-        selected.push({ pool, q });
-      });
-    });
-
-    const leftovers = [];
-    pools.forEach(pool => {
-      pool.questions.forEach(q => {
-        const key = `${pool.tag}|${q.q}`;
-        if (!used.has(key)) leftovers.push({ pool, q });
-      });
-    });
-
-    const remain = 20 - selected.length;
-    if (remain > 0) {
-      pickMany(leftovers, remain, rng).forEach(({ pool, q }) => {
-        const key = `${pool.tag}|${q.q}`;
-        if (used.has(key)) return;
-        used.add(key);
-        selected.push({ pool, q });
-      });
-    }
-
-    if (selected.length < 20) {
-      throw new Error(`${sIdx + 1}과목 문제은행 수량 부족: ${selected.length}/20`);
-    }
-
-    const subjectQuestions = shuffleWithRng(selected, rng)
-      .slice(0, 20)
-      .map(({ pool, q }) => {
-        const cloned = cloneQuestionWithShuffledOptions(q, rng);
-        cloned.tag = pool.tag; // 파트명(태그) 주입
-        return cloned;
-      });
-
-    finalQuestions.push(...subjectQuestions);
-  }
-
-  if (finalQuestions.length !== TARGET_QUESTION_COUNT) {
-    throw new Error(`생성 수량 오류: ${finalQuestions.length}/${TARGET_QUESTION_COUNT}`);
-  }
-
-  return {
-    label: '시험모드',
-    meta: {
-      title: '모의고사 생성본',
-      count: finalQuestions.length,
-      pass_score: 60,
-      version: 'gen-1.0',
-      source: 'parts.json',
-      seed
-    },
-    questions: finalQuestions
-  };
-}
-
-function buildLearningExam(banks) {
-  const seed = Date.now();
-  const rng = createRng(seed);
-  const allQuestions = [];
-
-  banks.forEach(bank => {
-    bank.questions.forEach(q => {
-      const cloned = cloneQuestionWithShuffledOptions(q, rng);
-      cloned._subjectIndex = bank.subjectIndex;
-      allQuestions.push(cloned);
-    });
-  });
-
-  const finalQuestions = shuffleWithRng(allQuestions, rng);
-
-  return {
-    label: '학습모드',
-    meta: {
-      title: '학습모드 전체 파트',
-      count: finalQuestions.length,
-      pass_score: 60,
-      version: 'learn-1.0',
-      source: 'parts.json',
-      seed
-    },
-    questions: finalQuestions
-  };
-}
-
-/* ── 홈 초기화: 회차 카드 동적 생성 ── */
-async function initHome() {
-  const list = document.getElementById('examList');
-  list.innerHTML = '';
-
-  const learnCard = document.createElement('div');
-  learnCard.className = 'exam-card';
-  learnCard.onclick = () => startGeneratedExam('learn');
-  learnCard.innerHTML = `
-    <div class="exam-card-left">
-      <div class="exam-num">LEARN</div>
-      <div class="exam-info">
-        <h3>학습모드</h3>
-        <p>전체 파트 문제은행 · 문제별 즉시 해설 · 오답노트</p>
-      </div>
-    </div>
-    <div class="exam-arrow">›</div>`;
-
-  const examCard = document.createElement('div');
-  examCard.className = 'exam-card';
-  examCard.onclick = () => startGeneratedExam('exam');
-  examCard.innerHTML = `
-    <div class="exam-card-left">
-      <div class="exam-num">EXAM</div>
-      <div class="exam-info">
-        <h3>시험모드</h3>
-        <p>즉시 시작 · 정답/해설 숨김 · 제출 후 채점</p>
-      </div>
-    </div>
-    <div class="exam-arrow">›</div>`;
-
-  list.appendChild(learnCard);
-  list.appendChild(examCard);
-}
-
-/* ── 과목 선택 화면 ── */
-function showSubjectSelect() {
-  const subjectNames = ['1과목 (지수이)', '2과목 (제어이)', '3과목 (관리이)'];
-  const container = document.getElementById('subjectSelectButtons');
-  
-  if (!container) {
-    console.error('subjectSelectButtons 요소를 찾을 수 없습니다');
-    return;
-  }
-  
-  container.innerHTML = '';
-
-  subjectNames.forEach((name, idx) => {
-    const btn = document.createElement('button');
-    btn.className = 'subject-select-btn';
-    btn.textContent = name;
-    btn.onclick = () => selectSubject(idx);
-    container.appendChild(btn);
-  });
-
-  showScreen('subjectSelect');
-}
-
-/* ── 과목 선택 처리 ── */
-async function selectSubject(subjectIdx) {
-  selectedSubjectIdx = subjectIdx;
-  await showPartSelect();
-}
-
-/* ── 파트 선택 화면 표시 ── */
-async function showPartSelect() {
-  if (selectedSubjectIdx < 0) {
-    showSubjectSelect();
-    return;
-  }
-
-  try {
-    const container = document.getElementById('partSelectButtons');
-    if (!container) {
-      console.error('partSelectButtons 요소를 찾을 수 없습니다');
-      return;
-    }
-
-    if (partsMetadata.length === 0) {
-      partsMetadata = await loadPartMetadata();
-    }
-
-    const partRange = SUBJECT_PART_RANGES[selectedSubjectIdx];
-    const subjectParts = partsMetadata.slice(partRange[0] - 1, partRange[1]);
-
-    container.innerHTML = '';
-    selectedPartIndices = [];
-
-    subjectParts.forEach((part, idx) => {
-      const globalIdx = partRange[0] - 1 + idx;
-      const label = document.createElement('label');
-      label.className = 'part-select-label';
-      label.innerHTML = `
-        <input type="checkbox" class="part-select-checkbox" data-idx="${globalIdx}" onclick="updatePartSelection()">
-        <span class="part-select-text">${part.tag} (${part.count}문항)</span>
-      `;
-      container.appendChild(label);
-    });
-
-    const titleEl = document.getElementById('partSelectTitle');
-    if (titleEl) {
-      const subjectName = ['1과목 (지수이)', '2과목 (제어이)', '3과목 (관리이)'][selectedSubjectIdx];
-      titleEl.textContent = `${subjectName} - 파트를 선택하세요`;
-    }
-
-    showScreen('partSelect');
-  } catch (e) {
-    console.error('파트 선택 실패:', e);
-    const container = document.getElementById('partSelectButtons');
-    if (container) {
-      container.innerHTML = `<div class="error-card">파트 목록을 불러오지 못했습니다.<br><small>${e.message}</small></div>`;
-    }
-  }
-}
-
-/* ── 파트 선택 업데이트 ── */
-function updatePartSelection() {
-  const checkboxes = document.querySelectorAll('.part-select-checkbox:checked');
-  selectedPartIndices = Array.from(checkboxes).map(cb => Number(cb.dataset.idx));
-  
-  const submitBtn = document.getElementById('partSelectSubmitBtn');
-  if (submitBtn) {
-    submitBtn.disabled = selectedPartIndices.length === 0;
-  }
-}
-
-/* ── 모드 선택으로 진행 ── */
-function proceedToModeSelect() {
-  if (selectedPartIndices.length === 0) return;
-  showModeSelect();
-}
-
-/* ── 모드 선택 화면 ── */
-async function showModeSelect() {
-  showScreen('modeSelect');
-}
-
-/* ── 선택된 파트로 시험 시작 ── */
-async function startWithSelectedParts(mode = 'learn') {
-  document.getElementById('hTitle').textContent = '로딩 중…';
-  showScreen('quiz');
-
-  try {
-    const banks = await loadPartBanks({ onlyIndices: selectedPartIndices });
-    const generated = buildSelectedPartsExam(banks, selectedPartIndices, mode);
-    const modeTitle = mode === 'exam' ? '시험모드' : '학습모드';
-
-    curQuestions = generated.questions;
-    chosen = new Array(curQuestions.length).fill(-1);
-    answered = new Array(curQuestions.length).fill(false);
-    latestWrongNoteText = '';
-    currentMode = mode;
-    currentExamLabel = modeTitle;
-    examMode = mode === 'exam';
-    examRevealMode = false;
-    learnRevealMode = true;
-    examScopeIndices = examMode ? curQuestions.map((_, i) => i) : [];
-    examCursor = 0;
-    stopExamTimer();
-    resetExamTimer();
-
-    document.getElementById('hTitle').textContent = modeTitle;
-    buildQuiz();
-    updateProgress();
-    setupTagScrollSpy();
-    if (examMode) {
-      startExamTimer();
-      syncExamModeQuestionView();
-    } else {
-      updateExamModeUI();
-      refreshLearnRevealView();
-    }
-
-  } catch (e) {
-    document.getElementById('quizBody').innerHTML =
-      `<div class="error-card">문제 파일을 불러오지 못했습니다.<br><small>${e.message}</small></div>`;
-  }
-}
-
-/* ── 선택된 파트로 시험 생성 ── */
-function buildSelectedPartsExam(banks, selectedPartIndices, mode = 'learn') {
-  let filteredBanks = banks.filter(bank => selectedPartIndices.includes(bank.sourceIndex));
-  if (!filteredBanks.length) filteredBanks = banks;
-  
-  if (filteredBanks.length === 0) {
-    throw new Error('선택한 파트가 없습니다.');
-  }
-
-  const seed = Date.now();
-  const rng = createRng(seed);
-  const questions = [];
-
-  filteredBanks.forEach(bank => {
-    bank.questions.forEach(q => {
-      const cloned = cloneQuestionWithShuffledOptions(q, rng);
-      cloned._subjectIndex = bank.subjectIndex;
-      cloned.tag = bank.tag; // _partTag 대신 tag 사용 (레이아웃 호환성)
-      questions.push(cloned);
-    });
-  });
-
-  const finalQuestions = shuffleWithRng(questions, rng);
-  
-  const partNames = filteredBanks.map(b => b.tag).join(', ');
-  const label = mode === 'exam' ? '시험모드' : '학습모드';
-
-  return {
-    label,
-    meta: {
-      title: partNames,
-      count: finalQuestions.length,
-      pass_score: 60,
-      version: 'custom-1.0',
-      source: 'parts.json',
-      seed,
-      selectedParts: selectedPartIndices
-    },
-    questions: finalQuestions
-  };
-}
-
-/* ── 파트 메타데이터 로드 ── */
-async function loadPartMetadata() {
-  if (partsMetadataCache) return partsMetadataCache;
-
-  const index = await loadPartsIndex();
-  partsMetadataCache = Array.isArray(index?.parts) ? index.parts : [];
-  return partsMetadataCache;
-}
-
-async function startGeneratedExam(mode = 'learn') {
-  document.getElementById('hTitle').textContent = '로딩 중…';
-  showScreen('quiz');
-
-  try {
-    const banks = await loadPartBanks();
-    const generated = mode === 'learn' ? buildLearningExam(banks) : buildGeneratedExam(banks);
-    const modeTitle = mode === 'exam' ? '시험모드' : '학습모드';
-
-    curQuestions = generated.questions;
-    chosen = new Array(curQuestions.length).fill(-1);
-    answered = new Array(curQuestions.length).fill(false);
-    latestWrongNoteText = '';
-    currentMode = mode;
-    currentExamLabel = modeTitle;
-    examMode = mode === 'exam';
-    examRevealMode = false;
-    learnRevealMode = true;
-    examScopeIndices = examMode ? curQuestions.map((_, i) => i) : [];
-    examCursor = 0;
-    stopExamTimer();
-    resetExamTimer();
-
-    document.getElementById('hTitle').textContent = modeTitle;
-    buildQuiz();
-    updateProgress();
-    setupTagScrollSpy();
-    if (examMode) {
-      startExamTimer();
-      syncExamModeQuestionView();
-    } else {
-      updateExamModeUI();
-      refreshLearnRevealView();
-    }
-
-  } catch (e) {
-    document.getElementById('quizBody').innerHTML =
-      `<div class="error-card">문제 파일을 불러오지 못했습니다.<br><small>${e.message}</small></div>`;
-  }
-}
-
-/* ── 퀴즈 HTML 생성 ── */
-function buildQuiz() {
-  const qs = curQuestions;
-  let html = '';
-  const localNoByQuestionIndex = new Array(qs.length).fill(0);
-
-  const subjects = [
-    { order: [], first: {}, count: {}, startIndex: 0 },
-    { order: [], first: {}, count: {}, startIndex: 20 },
-    { order: [], first: {}, count: {}, startIndex: 40 }
-  ];
-
-  qs.forEach((q, qi) => {
-    const subIdx = currentMode === 'learn'
-      ? Math.min(Math.max(Number.isInteger(q._subjectIndex) ? q._subjectIndex : 0, 0), 2)
-      : Math.min(Math.floor(qi / 20), 2);
-    const sub = subjects[subIdx];
-    if (sub.first[q.tag] === undefined) { sub.first[q.tag] = qi; sub.order.push(q.tag); }
-    sub.count[q.tag] = (sub.count[q.tag] || 0) + 1;
-    localNoByQuestionIndex[qi] = (sub.count.__localSeq || 0) + 1;
-    sub.count.__localSeq = localNoByQuestionIndex[qi];
-  });
-
-  qs.forEach((q, qi) => {
-    const subIdx = currentMode === 'learn'
-      ? Math.min(Math.max(Number.isInteger(q._subjectIndex) ? q._subjectIndex : 0, 0), 2)
-      : Math.min(Math.floor(qi / 20), 2);
-    const sub = subjects[subIdx];
-    const anchorId = sub.first[q.tag] === qi
-      ? `tag-anchor-${q.tag.replace(/[^가-힣a-zA-Z0-9]/g, '_')}_sub${subIdx}`
-      : '';
-
-    const typeClass = q.type === '암기' ? 'memory' : 'understanding';
-    const typeLabel = q.type || '이해';
-    const safeTag = escapeHtml(q.tag || '미분류');
-
-    const displayNo = currentMode === 'learn'
-      ? localNoByQuestionIndex[qi]
-      : (qi + 1);
-
-    html += `
-      <div class="q-block" id="qb${qi}" data-subidx="${subIdx}" data-tag="${safeTag}">
-        ${anchorId ? `<span id="${anchorId}" class="tag-anchor-spacer"></span>` : ''}
-        <div class="q-meta">
-          <span class="q-num-badge">Q${displayNo}</span>
-          <span class="q-tag">${safeTag}</span>
-          <span class="q-type ${typeClass}">${typeLabel}</span>
-          <div class="q-reveal-slot" style="display:none; margin-left:auto;">
-            <label class="q-inline-reveal" for="qInlineReveal${qi}">
-              <input id="qInlineReveal${qi}" class="q-inline-reveal-input" type="checkbox" onchange="toggleExamRevealModeInline(this.checked)">
-              <span>정답·해설</span>
-            </label>
-          </div>
-        </div>
-        <div class="q-text">${q.q}</div>
-        <div class="opts">
-          ${q.opts.map((o, oi) => `
-            <div class="option" id="optWrap${qi}_${oi}" onclick="pick(${qi},${oi})">
-              <div class="opt-no">${['①','②','③','④'][oi]}</div>
-              <div class="opt-body">
-                <div class="opt-name">
-                  ${o} 
-                  <span class="trap" id="optTrap${qi}_${oi}"></span>
-                  <span class="correct-label" id="optCorr${qi}_${oi}">정답</span>
-                </div>
-                <div class="opt-desc" id="optDesc${qi}_${oi}"></div>
-              </div>
-            </div>`).join('')}
-        </div>
-        <div class="q-inline-actions" style="display:none;">
-          <button class="q-inline-btn q-inline-prev" type="button" onclick="moveExamQuestion(-1)">이전</button>
-          <button class="q-inline-btn q-inline-next" type="button" onclick="moveExamQuestion(1)">다음</button>
-          <button class="q-inline-btn q-inline-submit" type="button" onclick="submitExamMode()">시험 제출</button>
-        </div>
-        <div class="common-exp" id="exp${qi}"></div>
-      </div>`;
-  });
-
-  document.getElementById('quizBody').innerHTML = html;
-
-  window.currentSubjects = subjects;
-  renderSubjectNav();
-  if (!examMode) switchSubject(0);
-}
-
-function renderSubjectNav() {
-  const wrap = document.querySelector('.subject-nav-wrap');
-  const nav = document.getElementById('subjectNav');
-  if (wrap) wrap.style.display = 'flex';
-  if (nav) nav.style.display = 'flex';
-  nav.innerHTML = '';
-  const names = ['1과목', '2과목', '3과목'];
-  names.forEach((name, i) => {
-    if (window.currentSubjects[i].order.length === 0) return;
-    const btn = document.createElement('button');
-    btn.className = 'sub-nav-btn' + (i === 0 ? ' active' : '');
-    btn.textContent = name;
-    btn.onclick = () => {
-      document.querySelectorAll('.sub-nav-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      switchSubject(i);
-    };
-    nav.appendChild(btn);
-  });
-}
-
-function switchSubject(subIdx) {
-  if (examMode) return;
-
-  renderTagNav(subIdx);
-  applyLearnFilter(subIdx, '');
-
-  window.scrollTo(0, 0);
-}
-
-function applyLearnFilter(subIdx, tag) {
-  document.querySelectorAll('.q-block').forEach(qb => {
-    const isSubjectMatch = qb.dataset.subidx === String(subIdx);
-    const isTagMatch = !tag || qb.dataset.tag === tag;
-    qb.style.display = (isSubjectMatch && isTagMatch) ? 'block' : 'none';
-  });
-}
-
-function renderTagNav(subIdx) {
-  const nav = document.getElementById('tagNav');
-  if (!nav) return;
-  
-  nav.innerHTML = '';
-  const sub = window.currentSubjects[subIdx];
-  if (!sub) return;
-  
-  sub.order.forEach(tag => {
-    const btn = document.createElement('button');
-    btn.className = 'tag-btn';
-    btn.dataset.tag = tag;
-    btn.innerHTML = `<span class="tag-btn-dot"></span>${tag}<span class="tag-btn-cnt">${sub.count[tag]}</span>`;
-    btn.onclick = () => {
-      document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      applyLearnFilter(subIdx, tag);
-      window.scrollTo(0, 0);
-    };
-    nav.appendChild(btn);
-  });
-}
-
-/* ── 태그 앵커 스크롤 스파이 ── */
-function setupTagScrollSpy() {
-  setTimeout(() => {
-    const obs = new IntersectionObserver(entries => {
-      entries.forEach(e => {
-        if (e.isIntersecting) {
-          const id = e.target.id;
-          const match = id.match(/_sub(\d+)$/);
-          const subIdx = match ? match[1] : '0';
-          
-          document.querySelectorAll('.tag-btn').forEach(b => {
-            const anchor = `tag-anchor-${b.dataset.tag.replace(/[^가-힣a-zA-Z0-9]/g, '_')}_sub${subIdx}`;
-            b.classList.toggle('active', anchor === id);
-          });
-        }
-      });
-    }, { rootMargin: '-80px 0px -60% 0px', threshold: 0 });
-
-    document.querySelectorAll('[id^="tag-anchor-"]').forEach(el => obs.observe(el));
-  }, 200);
-}
-
-function scrollToTag(anchorId, btn) {
-  const el = document.getElementById(anchorId);
-  if (!el) return;
-  const header = document.querySelector('.quiz-header');
-  const offset = header ? header.offsetHeight + 8 : 80;
-  const top = el.getBoundingClientRect().top + window.scrollY - offset;
-  window.scrollTo({ top, behavior: 'smooth' });
-  document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-}
-
-/* ── 선택 처리 ── */
-function pick(qi, oi) {
-  const q = curQuestions[qi];
-  if (examMode) {
-    chosen[qi] = oi;
-    answered[qi] = true;
-    applyExamSelectionView(qi);
-    updateProgress();
-    updateExamModeUI();
-    return;
-  }
-
-  if (answered[qi]) return;
-  chosen[qi] = oi;
-  answered[qi] = true;
-
-  applyLearnSelectionView(qi);
-  document.getElementById(`qb${qi}`).classList.add('answered');
+/* ── 선택 ── */
+function pick(qi,oi) {
+  if(examMode){chosen[qi]=oi;answered[qi]=true;applyExamSelectionView(qi);updateProgress();updateExamModeUI();return;}
+  if(answered[qi]) return;
+  chosen[qi]=oi;answered[qi]=true;applyLearnSelectionView(qi);
+  document.getElementById(`qb${qi}`)?.classList.add('answered');
   updateProgress();
-
-  if (answered.every(a => a)) setTimeout(() => showResult(), 800);
+  if(answered.every(a=>a)) setTimeout(()=>showResult(),800);
 }
 
-/* ── 해설 표시 (카드형 구조) ── */
-function showExplanation(qi) {
-  const q = curQuestions[qi];
-  const expV2 = q.explainV2 || null;
-  const optionExplainList = Array.isArray(expV2?.options)
-    ? expV2.options.map(item => item?.desc || '')
-    : (Array.isArray(q.optWhy) ? q.optWhy : []);
-  const conceptList = Array.isArray(expV2?.coreConcepts) ? expV2.coreConcepts : q.why;
-  const tipFlow = expV2?.tipFlow || q.tip;
-  const eliminationRule = expV2?.eliminationRule || q.rule;
-  const linkedInfo = expV2?.linkInfo || q.linkInfo;
-
-  q.opts.forEach((o, oi) => {
-    const wrap = document.getElementById(`optWrap${qi}_${oi}`);
-    const desc = document.getElementById(`optDesc${qi}_${oi}`);
-    const trap = document.getElementById(`optTrap${qi}_${oi}`);
-    const corr = document.getElementById(`optCorr${qi}_${oi}`);
-    const v2Meta = Array.isArray(expV2?.options) ? expV2.options[oi] : null;
-    
-    let cleanWhy = (optionExplainList[oi] || '').replace(/^\[(정답|선택|오답)\]\s*/, '');
-    desc.innerHTML = cleanWhy;
-    
-    trap.classList.remove('is-visible');
-    corr.classList.remove('is-visible');
-
-    if (oi === q.ans) {
-      corr.classList.add('is-visible');
-    } else {
-      let isTrapFound = true;
-      if (v2Meta?.trap) trap.innerHTML = v2Meta.trap;
-      else if (/(구매|단가|BOM)/.test(cleanWhy)) trap.innerHTML = '함정: 구매 업무';
-      else if (/(외관|색상|도장)/.test(cleanWhy)) trap.innerHTML = '함정: 외관 사양';
-      else if (/(전원|전장|전기)/.test(cleanWhy)) trap.innerHTML = '함정: 전장/전기';
-      else if (/(검사|수율)/.test(cleanWhy)) trap.innerHTML = '함정: 수율/검사';
-      else isTrapFound = false;
-
-      if (isTrapFound) trap.classList.add('is-visible');
-    }
-
-    wrap.classList.add('show-desc');
-  });
-
-  let whyHtml = '';
-  if (Array.isArray(conceptList)) {
-    conceptList.forEach(item => {
-      whyHtml += `
-        <div class="concept">
-          <div class="concept-title">${item.title}</div>
-          <div class="concept-desc">${item.desc}</div>
-        </div>`;
-    });
-  } else if (conceptList) {
-    let title = '핵심 개념';
-    let desc = conceptList;
-    const dotMatch = conceptList.match(/^([^.?]+[.?])\s*(.*)$/);
-    if (dotMatch) { title = dotMatch[1].trim(); desc = dotMatch[2].trim(); }
-    whyHtml = `<div class="concept"><div class="concept-title">${title}</div><div class="concept-desc">${desc}</div></div>`;
-  }
-
-  let stepsHtml = '';
-  if (tipFlow) {
-    const stepParts = tipFlow.split(/①|②|③|④|⑤/).filter(s => s.trim());
-    if (stepParts.length > 1 || tipFlow.includes('①')) {
-      let html = '<div class="steps">';
-      stepParts.forEach((part, idx) => {
-        const cleanPart = part.replace(/→/g, '').trim();
-        if (cleanPart) {
-          html += `<div class="step-num">${idx + 1}</div><span class="step-text">${cleanPart}</span>`;
-          if (idx < stepParts.length - 1) html += `<span class="arrow">→</span>`;
-        }
-      });
-      html += '</div>';
-      stepsHtml = html;
-    } else {
-      stepsHtml = `<div class="step-text step-inline-note">${tipFlow}</div>`;
-    }
-  }
-
-  let ruleHtml = '';
-  if (eliminationRule) {
-    ruleHtml = `
-      <hr class="div">
-      <div class="rule-box">
-        <div class="rule-title">${eliminationRule.title}</div>
-        ${(eliminationRule.rows || []).map(row => `
-          <div class="rule-row">
-            <span class="rule-keyword">${row.keyword}</span>
-            <span class="rule-action">${row.action}</span>
-          </div>
-        `).join('')}
-      </div>`;
-  }
-
-  let linkHtml = '';
-  if (linkedInfo) {
-    linkHtml = `<div class="link-box">${linkedInfo}</div>`;
-  }
-
-  document.getElementById(`exp${qi}`).innerHTML = `
-    <div class="card exp-card">
-      <div class="section-label">핵심 개념</div>
-      ${whyHtml}
-    </div>
-    <div class="card exp-card">
-      <div class="section-label">강사 팁</div>
-      ${stepsHtml}
-      ${ruleHtml}
-      ${linkHtml}
-    </div>
-  `;
-}
-
-/* ── 진행률 업데이트 ── */
+/* ── 진행률 ── */
 function updateProgress() {
-  const scope = curQuestions.map((_, i) => i);
-  const total = scope.length;
-  const done = scope.filter(i => answered[i]).length;
-  const correct = scope.filter(i => answered[i] && chosen[i] === curQuestions[i].ans).length;
-  const examPos = Math.min(examCursor + 1, Math.max(total, 1));
-  const examPct = total > 0 ? Math.round(examPos / total * 100) : 0;
-  const learnPct = total > 0 ? Math.round(done / total * 100) : 0;
-  const pFill = document.getElementById('pFill');
-  const pLabel = document.getElementById('pLabel');
-  const examPartNameEl = document.getElementById('examPartName');
-  const examProgressCountEl = document.getElementById('examProgressCount');
-  const hScore = document.getElementById('hScore');
-  if (pFill) pFill.style.width = (examMode ? examPct : learnPct) + '%';
-  if (pLabel) {
-    if (examMode) {
-      const activeIdx = (examScopeIndices.length ? examScopeIndices[examCursor] : examCursor) ?? 0;
-      const partName = curQuestions[activeIdx]?.tag || '미분류';
+  const total=curQuestions.length;
+  const done=answered.filter(Boolean).length;
+  const pos=Math.min(examCursor+1,Math.max(total,1));
+  const pct=total>0?Math.round((examMode?pos:done)/total*100):0;
+  const pFill=document.getElementById('pFill');
+  const pLabel=document.getElementById('pLabel');
+  if(pFill) pFill.style.width=pct+'%';
+  if(pLabel){
+    if(examMode){
+      const ai=(examScopeIndices.length?examScopeIndices[examCursor]:examCursor)??0;
+      const pn=curQuestions[ai]?.tag||'미분류';
       pLabel.classList.add('is-exam');
-      pLabel.innerHTML = `<span class="p-part">파트: ${escapeHtml(partName)}</span><span class="p-total">총 ${examPos}/${total}</span>`;
-      if (examPartNameEl) examPartNameEl.textContent = `파트: ${partName}`;
-      if (examProgressCountEl) examProgressCountEl.textContent = `총 ${examPos}/${total}`;
-    } else {
-      pLabel.classList.remove('is-exam');
-      pLabel.textContent = '';
-      if (examPartNameEl) examPartNameEl.textContent = '파트: -';
-      if (examProgressCountEl) examProgressCountEl.textContent = '총 1/60';
-    }
+      pLabel.innerHTML=`<span class="p-part">파트: ${escapeHtml(pn)}</span><span class="p-total">${pos}/${total}</span>`;
+      const pe=document.getElementById('examPartName'); if(pe) pe.textContent=`파트: ${pn}`;
+      const ce=document.getElementById('examProgressCount'); if(ce) ce.textContent=`${pos}/${total}`;
+    } else { pLabel.classList.remove('is-exam'); pLabel.textContent=''; }
   }
-  if (hScore) hScore.textContent = `${correct} / ${done} 정답`;
 }
 
-function escapeHtml(value) {
-  return String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+/* ── 해설 ── */
+function showExplanation(qi) {
+  const q=curQuestions[qi]; const expV2=q.explainV2||null;
+  const optList=Array.isArray(expV2?.options)?expV2.options.map(x=>x?.desc||''):(Array.isArray(q.optWhy)?q.optWhy:[]);
+  const concepts=Array.isArray(expV2?.coreConcepts)?expV2.coreConcepts:q.why;
+  const tip=expV2?.tipFlow||q.tip;
+  const rule=expV2?.eliminationRule||q.rule;
+  const link=expV2?.linkInfo||q.linkInfo;
+
+  q.opts.forEach((o,oi)=>{
+    const w=document.getElementById(`optWrap${qi}_${oi}`);
+    const d=document.getElementById(`optDesc${qi}_${oi}`);
+    const tr=document.getElementById(`optTrap${qi}_${oi}`);
+    const co=document.getElementById(`optCorr${qi}_${oi}`);
+    const v2=Array.isArray(expV2?.options)?expV2.options[oi]:null;
+    const why=(optList[oi]||'').replace(/^\[(정답|선택|오답)\]\s*/,'');
+    if(d) d.innerHTML=why;
+    tr?.classList.remove('is-visible'); co?.classList.remove('is-visible');
+    if(oi===q.ans){co?.classList.add('is-visible');}
+    else{
+      let found=true;
+      if(v2?.trap) tr.innerHTML=v2.trap;
+      else if(/(구매|단가|BOM)/.test(why)) tr.innerHTML='함정: 구매 업무';
+      else if(/(외관|색상|도장)/.test(why)) tr.innerHTML='함정: 외관 사양';
+      else if(/(전원|전장|전기)/.test(why)) tr.innerHTML='함정: 전장/전기';
+      else if(/(검사|수율)/.test(why)) tr.innerHTML='함정: 수율/검사';
+      else found=false;
+      if(found&&tr) tr.classList.add('is-visible');
+    }
+    if(w) w.classList.add('show-desc');
+  });
+
+  let why='';
+  if(Array.isArray(concepts)) concepts.forEach(c=>{ why+=`<div class="concept"><div class="concept-title">${c.title}</div><div class="concept-desc">${c.desc}</div></div>`; });
+  else if(concepts){const m=String(concepts).match(/^([^.?]+[.?])\s*(.*)$/); why=m?`<div class="concept"><div class="concept-title">${m[1].trim()}</div><div class="concept-desc">${m[2].trim()}</div></div>`:`<div class="concept"><div class="concept-title">핵심 개념</div><div class="concept-desc">${concepts}</div></div>`;}
+
+  let steps='';
+  if(tip){const ps=tip.split(/①|②|③|④|⑤/).filter(s=>s.trim());
+    if(ps.length>1||tip.includes('①')) steps='<div class="steps">'+ps.map((p,i)=>`<div class="step-num">${i+1}</div><span class="step-text">${p.replace(/→/g,'').trim()}</span>${i<ps.length-1?'<span class="arrow">→</span>':''}`).join('')+'</div>';
+    else steps=`<div class="step-text step-inline-note">${tip}</div>`;
+  }
+
+  let ruleHtml='';
+  if(rule) ruleHtml=`<hr class="div"><div class="rule-box"><div class="rule-title">${rule.title}</div>${(rule.rows||[]).map(r=>`<div class="rule-row"><span class="rule-keyword">${r.keyword}</span><span class="rule-action">${r.action}</span></div>`).join('')}</div>`;
+
+  const el=document.getElementById(`exp${qi}`);
+  if(el) el.innerHTML=`<div class="card exp-card"><div class="section-label">핵심 개념</div>${why}</div><div class="card exp-card"><div class="section-label">강사 팁</div>${steps}${ruleHtml}${link?`<div class="link-box">${link}</div>`:''}</div>`;
 }
 
-function extractKeywords(text, maxCount = 4) {
-  const stopwords = new Set(['무엇', '무엇이', '무엇을', '무엇은', '어떤', '어느', '가장', '다음', '관련', '경우', '상황', '위한', '대한', '에서', '으로', '한다', '된다']);
-  const tokens = String(text || '')
-    .replace(/[()\[\]{}?.,!~:;·/\\-]/g, ' ')
-    .split(/\s+/)
-    .map(token => token.trim())
-    .filter(token => token.length >= 2 && !stopwords.has(token));
+/* ── 퀴즈 빌드 ── */
+function buildQuiz() {
+  const qs=curQuestions;
+  const subjects=[{order:[],first:{},count:{},startIndex:0},{order:[],first:{},count:{},startIndex:20},{order:[],first:{},count:{},startIndex:40}];
+  const localNo=new Array(qs.length).fill(0);
+  qs.forEach((q,qi)=>{
+    const si=currentMode==='learn'?Math.min(Math.max(Number.isInteger(q._subjectIndex)?q._subjectIndex:0,0),2):Math.min(Math.floor(qi/20),2);
+    const sub=subjects[si];
+    if(sub.first[q.tag]===undefined){sub.first[q.tag]=qi;sub.order.push(q.tag);}
+    sub.count[q.tag]=(sub.count[q.tag]||0)+1;
+    localNo[qi]=(sub.count.__localSeq||0)+1; sub.count.__localSeq=localNo[qi];
+  });
 
-  return [...new Set(tokens)].slice(0, maxCount).join(' ');
+  let html='';
+  qs.forEach((q,qi)=>{
+    const si=currentMode==='learn'?Math.min(Math.max(Number.isInteger(q._subjectIndex)?q._subjectIndex:0,0),2):Math.min(Math.floor(qi/20),2);
+    const sub=subjects[si];
+    const anchorId=sub.first[q.tag]===qi?`tag-anchor-${q.tag.replace(/[^가-힣a-zA-Z0-9]/g,'_')}_sub${si}`:'';
+    const tc=q.type==='암기'?'memory':'understanding';
+    const dn=currentMode==='learn'?localNo[qi]:(qi+1);
+    html+=`<div class="q-block" id="qb${qi}" data-subidx="${si}" data-tag="${escapeHtml(q.tag||'미분류')}">
+      ${anchorId?`<span id="${anchorId}" class="tag-anchor-spacer"></span>`:''}
+      <div class="q-meta">
+        <span class="q-num-badge">Q${dn}</span>
+        <span class="q-tag">${escapeHtml(q.tag||'미분류')}</span>
+        <span class="q-type ${tc}">${q.type||'이해'}</span>
+        <div class="q-reveal-slot"><label class="q-inline-reveal" for="qIR${qi}"><input id="qIR${qi}" class="q-inline-reveal-input" type="checkbox" onchange="toggleExamRevealModeInline(this.checked)"><span>정답·해설</span></label></div>
+        <div class="q-search-actions">
+          <button class="q-search-btn youtube" onclick="openYouTubeSearch(${qi})" type="button"><svg class="q-search-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M21.8 8s-.2-1.4-.8-2c-.8-.8-1.6-.8-2-.9C16.8 5 12 5 12 5s-4.8 0-7 .1c-.4.1-1.2.1-2 .9-.6.6-.8 2-.8 2S2 9.6 2 11.2v1.5c0 1.6.2 3.2.2 3.2s.2 1.4.8 2c.8.8 1.8.8 2.3.8C6.8 19 12 19 12 19s4.8 0 7-.2c.4-.1 1.2-.1 2-.8.6-.6.8-2 .8-2s.2-1.6.2-3.2v-1.5C22 9.6 21.8 8 21.8 8zM9.7 14.5V9l5.4 2.8-5.4 2.7z"/></svg><span class="q-search-label">YouTube</span></button>
+          <button class="q-search-btn gemini" onclick="openGeminiSearch(${qi})" type="button"><svg class="q-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg><span class="q-search-label">Gemini</span></button>
+        </div>
+      </div>
+      <div class="q-text">${q.q}</div>
+      <div class="opts">${q.opts.map((o,oi)=>`<div class="option" id="optWrap${qi}_${oi}" onclick="pick(${qi},${oi})"><div class="opt-no">${['①','②','③','④'][oi]}</div><div class="opt-body"><div class="opt-name">${o}<span class="trap" id="optTrap${qi}_${oi}"></span><span class="correct-label" id="optCorr${qi}_${oi}">정답</span></div><div class="opt-desc" id="optDesc${qi}_${oi}"></div></div></div>`).join('')}</div>
+      <div class="q-inline-actions">
+        <button class="q-inline-btn q-inline-prev" type="button" onclick="moveExamQuestion(-1)">이전</button>
+        <button class="q-inline-btn q-inline-next" type="button" onclick="moveExamQuestion(1)">다음</button>
+        <button class="q-inline-btn q-inline-submit" type="button" onclick="submitExamMode()">시험 제출</button>
+      </div>
+      <div class="common-exp" id="exp${qi}"></div>
+    </div>`;
+  });
+
+  document.getElementById('quizBody').innerHTML=html;
+  window.currentSubjects=subjects;
+  renderSubjectNav();
+  if(!examMode) switchSubject(0);
 }
 
-function buildSearchQuery(q) {
-  const tag = String(q?.tag || '').trim();
-  const keywords = extractKeywords(q?.q || '', 4);
-  return [tag, keywords].filter(Boolean).join(' ');
+/* ── 네비 ── */
+function renderSubjectNav() {
+  const nav=document.getElementById('subjectNav'); if(!nav) return;
+  nav.innerHTML='';
+  ['1과목','2과목','3과목'].forEach((name,i)=>{
+    if(!window.currentSubjects[i].order.length) return;
+    const btn=document.createElement('button');
+    btn.className='sub-nav-btn'+(i===0?' active':''); btn.textContent=name;
+    btn.onclick=()=>{document.querySelectorAll('.sub-nav-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');switchSubject(i);};
+    nav.appendChild(btn);
+  });
+}
+function switchSubject(si) { if(examMode) return; renderTagNav(si); applyLearnFilter(si,''); window.scrollTo(0,0); }
+function applyLearnFilter(si,tag) { document.querySelectorAll('.q-block').forEach(b=>{b.style.display=(b.dataset.subidx===String(si)&&(!tag||b.dataset.tag===tag))?'block':'none';}); }
+function renderTagNav(si) {
+  const nav=document.getElementById('tagNav'); if(!nav) return;
+  nav.innerHTML='';
+  const sub=window.currentSubjects[si]; if(!sub) return;
+  sub.order.forEach(tag=>{
+    const btn=document.createElement('button'); btn.className='tag-btn'; btn.dataset.tag=tag;
+    btn.innerHTML=`<span class="tag-btn-dot"></span>${tag}<span class="tag-btn-cnt">${sub.count[tag]}</span>`;
+    btn.onclick=()=>{document.querySelectorAll('.tag-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');applyLearnFilter(si,tag);window.scrollTo(0,0);};
+    nav.appendChild(btn);
+  });
+}
+function setupTagScrollSpy() {
+  setTimeout(()=>{
+    const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(!e.isIntersecting) return; const m=e.target.id.match(/_sub(\d+)$/); const si=m?m[1]:'0'; document.querySelectorAll('.tag-btn').forEach(b=>b.classList.toggle('active',`tag-anchor-${b.dataset.tag.replace(/[^가-힣a-zA-Z0-9]/g,'_')}_sub${si}`===e.target.id));});},{rootMargin:'-80px 0px -60% 0px',threshold:0});
+    document.querySelectorAll('[id^="tag-anchor-"]').forEach(el=>obs.observe(el));
+  },200);
 }
 
+/* ── 검색 ── */
 function openYouTubeSearch(qi) {
-  const q = curQuestions[qi];
-  if (!q) return;
-  const query = buildSearchQuery(q);
-  const url = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
-  window.open(url, '_blank', 'noopener,noreferrer');
+  const q=curQuestions[qi]; if(!q) return;
+  window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent([q.tag,extractKeywords(q.q,4)].filter(Boolean).join(' '))}`, '_blank','noopener,noreferrer');
 }
-
 function openGeminiSearch(qi) {
-  const q = curQuestions[qi];
-  if (!q) return;
-  const query = String(q.q || '').trim();
-  navigator.clipboard.writeText(query).then(() => {
-    alert('쿼리가 복사되었습니다. Gemini에 붙여넣기 하세요.');
-    window.open('https://gemini.google.com/app', '_blank');
-  }).catch(() => {
-    const link = document.getElementById('geminiLink');
-    if (link) {
-      link.href = `https://gemini.google.com/app?q=${encodeURIComponent(query)}`;
-      link.click();
-      return;
-    }
-    window.open(`https://gemini.google.com/app?q=${encodeURIComponent(query)}`, '_blank', 'noopener,noreferrer');
-  });
+  const q=curQuestions[qi]; if(!q) return;
+  const query=String(q.q||'').trim();
+  navigator.clipboard.writeText(query).then(()=>{alert('쿼리가 복사되었습니다. Gemini에 붙여넣기 하세요.');window.open('https://gemini.google.com/app','_blank');})
+  .catch(()=>window.open(`https://gemini.google.com/app?q=${encodeURIComponent(query)}`,'_blank','noopener,noreferrer'));
 }
 
-function getQuestionTag(q) {
-  return (q && typeof q.tag === 'string' && q.tag.trim()) ? q.tag.trim() : '미분류';
+/* ── 결과 ── */
+function getQuestionTag(q){return q?.tag?.trim()||'미분류';}
+function getCoreLine(q){return q?.explainV2?.coreConcepts?.[0]?.desc||q?.why?.[0]?.desc||q?.tip||'핵심 개념 복습이 필요한 문항입니다.';}
+function buildWeakTagStats(qs,ch,an){
+  const m={};
+  qs.forEach((q,i)=>{if(!an[i]) return; const t=getQuestionTag(q); if(!m[t]) m[t]={attempted:0,wrong:0}; m[t].attempted++; if(ch[i]!==q.ans) m[t].wrong++;});
+  return Object.entries(m).map(([tag,s])=>({tag,...s,accuracy:s.attempted?Math.round((s.attempted-s.wrong)/s.attempted*100):0})).sort((a,b)=>b.wrong!==a.wrong?b.wrong-a.wrong:a.accuracy-b.accuracy);
 }
-
-function getQuestionCoreLine(q) {
-  if (q?.explainV2?.coreConcepts?.[0]?.desc) return q.explainV2.coreConcepts[0].desc;
-  if (q?.why?.[0]?.desc) return q.why[0].desc;
-  if (q?.tip) return q.tip;
-  return '핵심 개념 복습이 필요한 문항입니다.';
+function buildWrongNoteItems(qs,ch,an){
+  const nums=['①','②','③','④'];
+  return qs.reduce((acc,q,i)=>{
+    if(ch[i]===q.ans) return acc;
+    const skip=!an[i]||ch[i]<0;
+    acc.push({index:i+1,tag:getQuestionTag(q),type:q?.type||'이해',question:q?.q||'',isSkip:skip,myAnswerText:skip?'미응답':`${nums[ch[i]]||''} ${q.opts?.[ch[i]]||''}`.trim(),correctText:`${nums[q.ans]||''} ${q.opts?.[q.ans]||''}`.trim(),coreLine:getCoreLine(q)});
+    return acc;
+  },[]);
 }
-
-function buildWeakTagStats(qs, chosenAnswers, answeredFlags) {
-  const byTag = {};
-  qs.forEach((q, i) => {
-    if (!answeredFlags[i]) return;
-    const tag = getQuestionTag(q);
-    if (!byTag[tag]) byTag[tag] = { attempted: 0, wrong: 0 };
-    byTag[tag].attempted += 1;
-    if (chosenAnswers[i] !== q.ans) byTag[tag].wrong += 1;
-  });
-
-  return Object.entries(byTag)
-    .map(([tag, stat]) => {
-      const correct = stat.attempted - stat.wrong;
-      const accuracy = stat.attempted ? Math.round((correct / stat.attempted) * 100) : 0;
-      return { tag, ...stat, accuracy };
-    })
-    .sort((a, b) => {
-      if (b.wrong !== a.wrong) return b.wrong - a.wrong;
-      if (a.accuracy !== b.accuracy) return a.accuracy - b.accuracy;
-      return b.attempted - a.attempted;
-    });
-}
-
-function buildWrongNoteItems(qs, chosenAnswers, answeredFlags) {
-  const notes = [];
-  qs.forEach((q, i) => {
-    const picked = chosenAnswers[i];
-    if (picked === q.ans) return;
-
-    const isSkip = !answeredFlags[i] || picked < 0;
-    const myAnswerText = isSkip
-      ? '미응답'
-      : `${['①', '②', '③', '④'][picked] || ''} ${q.opts?.[picked] || ''}`.trim();
-    const correctText = `${['①', '②', '③', '④'][q.ans] || ''} ${q.opts?.[q.ans] || ''}`.trim();
-
-    notes.push({
-      index: i + 1,
-      tag: getQuestionTag(q),
-      type: q?.type || '이해',
-      question: q?.q || '',
-      myAnswerText,
-      correctText,
-      coreLine: getQuestionCoreLine(q),
-      isSkip
-    });
-  });
-  return notes;
-}
-
-function buildWrongNoteText(examLabel, score, notes, weakTags) {
-  const lines = [];
-  lines.push(`[${examLabel}] 오답노트`);
-  lines.push(`점수: ${score}점`);
-  if (weakTags.length) {
-    lines.push('약점 태그: ' + weakTags.slice(0, 3).map(t => `${t.tag}(오답 ${t.wrong})`).join(', '));
-  }
+function buildWrongNoteText(label,score,notes,weakTags){
+  const lines=[`[${label}] 오답노트`,`점수: ${score}점`];
+  if(weakTags.length) lines.push('약점 태그: '+weakTags.slice(0,3).map(t=>`${t.tag}(오답 ${t.wrong})`).join(', '));
   lines.push('');
-
-  notes.forEach(n => {
-    lines.push(`Q${n.index} [${n.tag}/${n.type}] ${n.isSkip ? '미응답' : '오답'}`);
-    lines.push(`문제: ${n.question}`);
-    lines.push(`내 답: ${n.myAnswerText}`);
-    lines.push(`정답: ${n.correctText}`);
-    lines.push(`핵심: ${n.coreLine}`);
-    lines.push('');
-  });
-
+  notes.forEach(n=>{lines.push(`Q${n.index} [${n.tag}/${n.type}] ${n.isSkip?'미응답':'오답'}`,`문제: ${n.question}`,`내 답: ${n.myAnswerText}`,`정답: ${n.correctText}`,`핵심: ${n.coreLine}`,'');});
   return lines.join('\n').trim();
 }
-
-async function copyWrongNote() {
-  if (!latestWrongNoteText) return;
-  const btn = document.getElementById('copyWrongNoteBtn');
-  const original = btn ? btn.textContent : '';
-  try {
-    await navigator.clipboard.writeText(latestWrongNoteText);
-    if (btn) btn.textContent = '오답노트 복사 완료';
-  } catch {
-    if (btn) btn.textContent = '복사 실패 (브라우저 권한 확인)';
-  } finally {
-    if (btn) {
-      setTimeout(() => {
-        btn.textContent = original || '오답노트 복사';
-      }, 1200);
-    }
-  }
+async function copyWrongNote(){
+  if(!latestWrongNoteText) return;
+  const btn=document.getElementById('copyWrongNoteBtn'); const orig=btn?.textContent||'';
+  try{await navigator.clipboard.writeText(latestWrongNoteText);if(btn)btn.textContent='오답노트 복사 완료';}
+  catch{if(btn)btn.textContent='복사 실패 (브라우저 권한 확인)';}
+  finally{if(btn)setTimeout(()=>{btn.textContent=orig||'오답노트 복사';},1200);}
 }
 
-/* ── 결과 화면 ── */
-function showResult() {
+function showResult(){
   stopExamTimer();
-  const qs = curQuestions;
-  const progressWrap = document.querySelector('.progress-bar-wrap');
-  const scope = examMode
-    ? (examScopeIndices.length ? examScopeIndices : qs.map((_, i) => i))
-    : qs.map((_, i) => i);
-  const total = scope.length;
-  const correct = scope.filter(i => answered[i] && chosen[i] === qs[i].ans).length;
-  const wrong = scope.filter(i => answered[i] && chosen[i] !== qs[i].ans).length;
-  const skip = scope.filter(i => !answered[i]).length;
-  if (progressWrap) progressWrap.style.display = examMode ? 'block' : 'none';
-  const score = Math.round(correct / total * 100);
-  const isPass = score >= 60;
-  const deg = Math.round(score / 100 * 360);
+  const qs=curQuestions;
+  const scope=examMode?(examScopeIndices.length?examScopeIndices:qs.map((_,i)=>i)):qs.map((_,i)=>i);
+  const total=scope.length;
+  const correct=scope.filter(i=>answered[i]&&chosen[i]===qs[i].ans).length;
+  const wrong=scope.filter(i=>answered[i]&&chosen[i]!==qs[i].ans).length;
+  const skip=scope.filter(i=>!answered[i]).length;
+  const score=Math.round(correct/total*100);
+  const pass=score>=60;
+  document.getElementById('resExamName').textContent=currentExamLabel||'모의고사';
+  document.getElementById('resPct').textContent=score;
+  document.getElementById('resGrade').textContent=pass?'✓ 합격권 (60점 이상)':'✗ 불합격권 (60점 미만)';
+  document.getElementById('resGrade').className='result-grade '+(pass?'pass':'fail');
+  document.getElementById('resCorrect').textContent=correct;
+  document.getElementById('resWrong').textContent=wrong;
+  document.getElementById('resSkip').textContent=skip;
+  document.getElementById('scoreCircle').style.setProperty('--deg',Math.round(score/100*360)+'deg');
 
-  document.getElementById('resExamName').textContent = currentExamLabel || '모의고사';
-  document.getElementById('resPct').textContent = score;
-  document.getElementById('resGrade').textContent = isPass ? '✓ 합격권 (60점 이상)' : '✗ 불합격권 (60점 미만)';
-  document.getElementById('resGrade').className = 'result-grade ' + (isPass ? 'pass' : 'fail');
-  document.getElementById('resCorrect').textContent = correct;
-  document.getElementById('resWrong').textContent = wrong;
-  document.getElementById('resSkip').textContent = skip;
-  document.getElementById('scoreCircle').style.setProperty('--deg', deg + 'deg');
+  const sQs=scope.map(i=>qs[i]),sCh=scope.map(i=>chosen[i]),sAn=scope.map(i=>answered[i]);
+  const wt=buildWeakTagStats(sQs,sCh,sAn);
+  const wn=buildWrongNoteItems(sQs,sCh,sAn);
+  latestWrongNoteText=buildWrongNoteText(currentExamLabel||'모의고사',score,wn,wt);
 
-  const scopedQuestions = scope.map(i => qs[i]);
-  const scopedChosen = scope.map(i => chosen[i]);
-  const scopedAnswered = scope.map(i => answered[i]);
-  const weakTagStats = buildWeakTagStats(scopedQuestions, scopedChosen, scopedAnswered);
-  const wrongNotes = buildWrongNoteItems(scopedQuestions, scopedChosen, scopedAnswered);
-  latestWrongNoteText = buildWrongNoteText(currentExamLabel || '모의고사', score, wrongNotes, weakTagStats);
-
-  let reviewHTML = '<div class="review-section">';
-  reviewHTML += '<div class="review-title">약점 태그 분석</div>';
-  if (weakTagStats.length === 0) {
-    reviewHTML += '<div class="review-perfect">응답 데이터가 없어 약점 분석을 생략했습니다.</div>';
-  } else {
-    reviewHTML += '<div class="weak-tag-grid">';
-    weakTagStats.slice(0, 6).forEach(stat => {
-      const rateClass = stat.accuracy >= 80 ? 'high' : (stat.accuracy >= 60 ? 'mid' : 'low');
-      reviewHTML += `
-        <div class="weak-tag-card ${rateClass}">
-          <div class="weak-tag-name">${escapeHtml(stat.tag)}</div>
-          <div class="weak-tag-meta">정확도 ${stat.accuracy}% · 오답 ${stat.wrong}/${stat.attempted}</div>
-        </div>`;
-    });
-    reviewHTML += '</div>';
-  }
-  reviewHTML += '</div>';
-
-  reviewHTML += '<div class="review-section">';
-  reviewHTML += '<div class="review-title">자동 오답노트</div>';
-  reviewHTML += '<button class="btn-secondary compact" id="copyWrongNoteBtn" onclick="copyWrongNote()">오답노트 복사</button>';
-  if (!wrongNotes.length) {
-    reviewHTML += '<div class="review-perfect">전문항 정답! 오답노트가 비어 있습니다.</div>';
-  } else {
-    reviewHTML += '<div class="review-list">';
-    wrongNotes.forEach(note => {
-      reviewHTML += `
-        <div class="review-note-item">
-          <div class="review-note-head">
-            <span class="review-num">Q${note.index}</span>
-            <span class="review-chip">${escapeHtml(note.tag)}</span>
-            <span class="review-chip">${escapeHtml(note.type)}</span>
-            <span class="review-mark ${note.isSkip ? 'skip' : 'wrong'}">${note.isSkip ? '미응답' : '오답'}</span>
-          </div>
-          <div class="review-q">${escapeHtml(note.question)}</div>
-          <div class="review-note-line"><strong>내 답:</strong> ${escapeHtml(note.myAnswerText)}</div>
-          <div class="review-note-line"><strong>정답:</strong> ${escapeHtml(note.correctText)}</div>
-          <div class="review-note-core">핵심 복습: ${escapeHtml(note.coreLine)}</div>
-        </div>`;
-    });
-    reviewHTML += '</div>';
-  }
-  reviewHTML += '</div>';
-
-  document.getElementById('resReview').innerHTML = reviewHTML;
-
+  let html='<div class="review-section"><div class="review-title">약점 태그 분석</div>';
+  if(!wt.length) html+='<div class="review-perfect">응답 데이터가 없어 약점 분석을 생략했습니다.</div>';
+  else{html+='<div class="weak-tag-grid">'; wt.slice(0,6).forEach(s=>{const c=s.accuracy>=80?'high':s.accuracy>=60?'mid':'low'; html+=`<div class="weak-tag-card ${c}"><div class="weak-tag-name">${escapeHtml(s.tag)}</div><div class="weak-tag-meta">정확도 ${s.accuracy}% · 오답 ${s.wrong}/${s.attempted}</div></div>`;});html+='</div>';}
+  html+='</div><div class="review-section"><div class="review-title">자동 오답노트</div><button class="btn-secondary compact" id="copyWrongNoteBtn" onclick="copyWrongNote()">오답노트 복사</button>';
+  if(!wn.length) html+='<div class="review-perfect">전문항 정답! 오답노트가 비어 있습니다.</div>';
+  else{html+='<div class="review-list">'; wn.forEach(n=>{html+=`<div class="review-note-item"><div class="review-note-head"><span class="review-num">Q${n.index}</span><span class="review-chip">${escapeHtml(n.tag)}</span><span class="review-chip">${escapeHtml(n.type)}</span><span class="review-mark ${n.isSkip?'skip':'wrong'}">${n.isSkip?'미응답':'오답'}</span></div><div class="review-q">${escapeHtml(n.question)}</div><div class="review-note-line"><strong>내 답:</strong> ${escapeHtml(n.myAnswerText)}</div><div class="review-note-line"><strong>정답:</strong> ${escapeHtml(n.correctText)}</div><div class="review-note-core">핵심 복습: ${escapeHtml(n.coreLine)}</div></div>`;});html+='</div>';}
+  html+='</div>';
+  document.getElementById('resReview').innerHTML=html;
   showScreen('result');
 }
 
-function reviewExam() { showScreen('quiz'); window.scrollTo(0, 0); }
-function goHome() {
+function reviewExam(){showScreen('quiz');window.scrollTo(0,0);}
+function goHome(){
   stopExamTimer();
-  currentExamLabel = '';
-  currentMode = 'learn';
-  examMode = false;
-  examRevealMode = false;
-  learnRevealMode = true;
-  examScopeIndices = [];
-  examCursor = 0;
-  selectedSubjectIdx = -1;
-  selectedPartIndices = [];
-  resetExamTimer();
-  updateExamModeUI();
-  initHome();
-  showScreen('home');
+  currentExamLabel='';currentMode='learn';examMode=false;examRevealMode=false;learnRevealMode=true;
+  examScopeIndices=[];examCursor=0;selectedSubjectIdx=-1;selectedPartIndices=[];
+  resetExamTimer();setHeaderMode('learn');initHome();showScreen('home');
 }
 
-/* ────진입점──── */
-function bootApp() {
-  initThemeToggle();
-  bindExamModeControls();
-  initHome();
-  showScreen('home');
+/* ── 데이터 로드 ── */
+function createRng(seed){let s=(seed>>>0)||1;return()=>{s=(1664525*s+1013904223)>>>0;return s/0x100000000;};}
+function shuffleWithRng(arr,rng){const c=[...arr];for(let i=c.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[c[i],c[j]]=[c[j],c[i]];}return c;}
+function cloneQuestionWithShuffledOptions(q,rng){
+  const n=JSON.parse(JSON.stringify(q));
+  if(!Array.isArray(n.opts)||n.opts.length!==4) return n;
+  const mapped=n.opts.map((text,orig)=>({text,orig}));
+  const sh=shuffleWithRng(mapped,rng);
+  n.opts=sh.map(x=>x.text); n.ans=sh.findIndex(x=>x.orig===q.ans);
+  if(Array.isArray(q.optWhy)) n.optWhy=sh.map(x=>q.optWhy[x.orig]);
+  if(n.explainV2&&Array.isArray(q.explainV2?.options)) n.explainV2.options=sh.map(x=>q.explainV2.options[x.orig]);
+  return n;
+}
+function pickMany(items,count,rng){if(count<=0) return[];return shuffleWithRng(items,rng).slice(0,Math.min(count,items.length));}
+function getSubjectIndexByPartNo(n){for(let i=0;i<SUBJECT_PART_RANGES.length;i++){const[s,e]=SUBJECT_PART_RANGES[i];if(n>=s&&n<=e) return i;}return -1;}
+
+async function loadPartsIndex(){
+  if(partsIndexCache) return partsIndexCache;
+  partsIndexCache=(async()=>{const r=await fetch(PARTS_INDEX_FILE);if(!r.ok) throw new Error(`parts.json 로드 실패 (HTTP ${r.status})`);const j=await r.json();if(!Array.isArray(j?.parts)||!j.parts.length) throw new Error('parts.json에 파트 목록이 없습니다.');return j;})();
+  try{return await partsIndexCache;}catch(e){partsIndexCache=null;throw e;}
+}
+async function loadPartBanks(opts={}){
+  const{onlyIndices=null,forceReload=false}=opts;
+  const ni=Array.isArray(onlyIndices)&&onlyIndices.length?[...new Set(onlyIndices.map(Number).filter(n=>Number.isInteger(n)&&n>=0))].sort((a,b)=>a-b):null;
+  if(!forceReload&&!ni&&partBanksCache) return partBanksCache;
+  const loader=(async()=>{
+    const idx=await loadPartsIndex(); const parts=Array.isArray(idx?.parts)?idx.parts:[];
+    const targets=ni?ni.map(si=>({part:parts[si],si})).filter(x=>!!x.part):parts.map((part,si)=>({part,si}));
+    const banks=(await Promise.all(targets.map(async({part,si})=>{
+      if(!forceReload&&partBankByIndexCache.has(si)) return partBankByIndexCache.get(si);
+      if(!part.file) return null;
+      const m=part.file.match(/part(\d+)\.json$/); const pn=m?Number(m[1]):NaN;
+      const subjectIndex=Number.isFinite(pn)?getSubjectIndexByPartNo(pn):-1;
+      if(subjectIndex<0) return null;
+      const r=await fetch(part.file); if(!r.ok) throw new Error(`${part.file} 로드 실패`);
+      const j=await r.json(); const questions=Array.isArray(j?.questions)?j.questions:[];
+      if(!questions.length) return null;
+      const bank={tag:part.tag||'미분류',partNo:pn,subjectIndex,questions,sourceIndex:si};
+      partBankByIndexCache.set(si,bank); return bank;
+    }))).filter(Boolean);
+    if(!banks.length) throw new Error('문제은행이 비어 있습니다.');
+    return banks;
+  })();
+  if(!forceReload&&!ni){partBanksCache=loader;try{return await partBanksCache;}catch(e){partBanksCache=null;throw e;}}
+  return loader;
+}
+async function loadPartMetadata(){
+  if(partsMetadataCache) return partsMetadataCache;
+  const idx=await loadPartsIndex(); partsMetadataCache=Array.isArray(idx?.parts)?idx.parts:[];
+  return partsMetadataCache;
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', bootApp);
-} else {
-  bootApp();
+/* ── 시험 생성 ── */
+function buildGeneratedExam(banks){
+  const rng=createRng(Date.now()); const pools=[[],[],[]];
+  banks.forEach(b=>{if(b.subjectIndex>=0&&b.subjectIndex<=2) pools[b.subjectIndex].push({tag:b.tag,questions:shuffleWithRng(b.questions,rng)});});
+  const final=[];
+  for(let s=0;s<3;s++){
+    const sel=[]; const used=new Set();
+    pools[s].forEach(p=>{pickMany(p.questions,BASE_PICK_PER_TAG,rng).forEach(q=>{const k=`${p.tag}|${q.q}`;if(!used.has(k)){used.add(k);sel.push({p,q});}});});
+    const lft=[];pools[s].forEach(p=>p.questions.forEach(q=>{const k=`${p.tag}|${q.q}`;if(!used.has(k)) lft.push({p,q});}));
+    const rem=20-sel.length; if(rem>0) pickMany(lft,rem,rng).forEach(({p,q})=>{const k=`${p.tag}|${q.q}`;if(!used.has(k)){used.add(k);sel.push({p,q});}});
+    if(sel.length<20) throw new Error(`${s+1}과목 문제은행 수량 부족: ${sel.length}/20`);
+    shuffleWithRng(sel,rng).slice(0,20).forEach(({p,q})=>{const c=cloneQuestionWithShuffledOptions(q,rng);c.tag=p.tag;final.push(c);});
+  }
+  if(final.length!==TARGET_QUESTION_COUNT) throw new Error(`생성 수량 오류: ${final.length}/${TARGET_QUESTION_COUNT}`);
+  return{label:'시험모드',questions:final};
 }
+function buildLearningExam(banks){
+  const rng=createRng(Date.now()); const all=[];
+  banks.forEach(b=>b.questions.forEach(q=>{const c=cloneQuestionWithShuffledOptions(q,rng);c._subjectIndex=b.subjectIndex;all.push(c);}));
+  return{label:'학습모드',questions:shuffleWithRng(all,rng)};
+}
+function buildSelectedPartsExam(banks,indices,mode){
+  const rng=createRng(Date.now()); let fb=banks.filter(b=>indices.includes(b.sourceIndex)); if(!fb.length) fb=banks;
+  const all=[];fb.forEach(b=>b.questions.forEach(q=>{const c=cloneQuestionWithShuffledOptions(q,rng);c._subjectIndex=b.subjectIndex;c.tag=b.tag;all.push(c);}));
+  return{label:mode==='exam'?'시험모드':'학습모드',questions:shuffleWithRng(all,rng)};
+}
+
+/* ── 시작 흐름 ── */
+async function initHome(){
+  const list=document.getElementById('examList'); list.innerHTML='';
+  const mk=(id,label,desc,fn)=>{const el=document.createElement('div');el.className='exam-card';el.onclick=fn;el.innerHTML=`<div class="exam-card-left"><div class="exam-num">${id}</div><div class="exam-info"><h3>${label}</h3><p>${desc}</p></div></div><div class="exam-arrow">›</div>`;return el;};
+  list.appendChild(mk('LEARN','학습모드','전체 파트 문제은행 · 문제별 즉시 해설 · 오답노트',()=>startGeneratedExam('learn')));
+  list.appendChild(mk('EXAM','시험모드','즉시 시작 · 정답/해설 숨김 · 제출 후 채점',()=>startGeneratedExam('exam')));
+}
+function showSubjectSelect(){
+  const c=document.getElementById('subjectSelectButtons'); if(!c) return; c.innerHTML='';
+  ['1과목 (지수이)','2과목 (제어이)','3과목 (관리이)'].forEach((name,i)=>{const b=document.createElement('button');b.className='subject-select-btn';b.textContent=name;b.onclick=()=>selectSubject(i);c.appendChild(b);});
+  showScreen('subjectSelect');
+}
+async function selectSubject(i){selectedSubjectIdx=i;await showPartSelect();}
+async function showPartSelect(){
+  if(selectedSubjectIdx<0){showSubjectSelect();return;}
+  try{
+    const c=document.getElementById('partSelectButtons'); if(!c) return;
+    if(!partsMetadata.length) partsMetadata=await loadPartMetadata();
+    const[s,e]=SUBJECT_PART_RANGES[selectedSubjectIdx]; const sp=partsMetadata.slice(s-1,e);
+    c.innerHTML=''; selectedPartIndices=[];
+    sp.forEach((part,i)=>{const gi=s-1+i;const l=document.createElement('label');l.className='part-select-label';l.innerHTML=`<input type="checkbox" class="part-select-checkbox" data-idx="${gi}" onclick="updatePartSelection()"><span class="part-select-text">${part.tag} (${part.count}문항)</span>`;c.appendChild(l);});
+    const t=document.getElementById('partSelectTitle'); if(t) t.textContent=`${'1과목 2과목 3과목'.split(' ')[selectedSubjectIdx]} - 파트를 선택하세요`;
+    showScreen('partSelect');
+  }catch(e){const c=document.getElementById('partSelectButtons');if(c)c.innerHTML=`<div class="error-card">파트 목록을 불러오지 못했습니다.<br><small>${e.message}</small></div>`;}
+}
+function updatePartSelection(){
+  selectedPartIndices=Array.from(document.querySelectorAll('.part-select-checkbox:checked')).map(cb=>Number(cb.dataset.idx));
+  const btn=document.getElementById('partSelectSubmitBtn'); if(btn) btn.disabled=!selectedPartIndices.length;
+}
+function proceedToModeSelect(){if(!selectedPartIndices.length) return;showScreen('modeSelect');}
+
+async function launchQuiz(generated,mode){
+  curQuestions=generated.questions;chosen=new Array(curQuestions.length).fill(-1);answered=new Array(curQuestions.length).fill(false);
+  latestWrongNoteText='';currentMode=mode;currentExamLabel=generated.label;
+  examMode=mode==='exam';examRevealMode=false;learnRevealMode=true;
+  examScopeIndices=examMode?curQuestions.map((_,i)=>i):[];examCursor=0;
+  stopExamTimer();resetExamTimer();
+  setHeaderMode(examMode?'exam':'learn');
+  document.getElementById('hTitle').textContent=generated.label;
+  buildQuiz();updateProgress();setupTagScrollSpy();
+  if(examMode){startExamTimer();syncExamModeQuestionView();}
+  else{updateExamModeUI();refreshLearnRevealView();}
+}
+
+async function startWithSelectedParts(mode='learn'){
+  document.getElementById('hTitle').textContent='로딩 중…'; showScreen('quiz');
+  try{const banks=await loadPartBanks({onlyIndices:selectedPartIndices});await launchQuiz(buildSelectedPartsExam(banks,selectedPartIndices,mode),mode);}
+  catch(e){document.getElementById('quizBody').innerHTML=`<div class="error-card">문제 파일을 불러오지 못했습니다.<br><small>${e.message}</small></div>`;}
+}
+async function startGeneratedExam(mode='learn'){
+  document.getElementById('hTitle').textContent='로딩 중…'; showScreen('quiz');
+  try{const banks=await loadPartBanks();await launchQuiz(mode==='learn'?buildLearningExam(banks):buildGeneratedExam(banks),mode);}
+  catch(e){document.getElementById('quizBody').innerHTML=`<div class="error-card">문제 파일을 불러오지 못했습니다.<br><small>${e.message}</small></div>`;}
+}
+
+/* ── 이벤트 바인딩 ── */
+function bindControls(){
+  document.getElementById('modeToggleBtn')?.addEventListener('click',toggleExamMode);
+  document.getElementById('learnRevealToggle')?.addEventListener('change',toggleLearnRevealMode);
+  document.getElementById('submitConfirmOk')?.addEventListener('click',()=>closeSubmitConfirmModal(true));
+  document.getElementById('submitConfirmCancel')?.addEventListener('click',()=>closeSubmitConfirmModal(false));
+  document.getElementById('submitConfirmModal')?.querySelector('[data-close="1"]')?.addEventListener('click',()=>closeSubmitConfirmModal(false));
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&submitConfirmResolver) closeSubmitConfirmModal(false);});
+  const qb=document.getElementById('quizBody');
+  if(qb){
+    let sx=0,dragging=false;
+    const s=x=>{sx=x;dragging=true;};
+    const e=x=>{if(!dragging) return;dragging=false;const d=sx-x;if(Math.abs(d)>40) moveExamQuestion(d>0?1:-1);};
+    qb.addEventListener('touchstart',e=>s(e.changedTouches[0].screenX),false);
+    qb.addEventListener('touchend',e=>e(e.changedTouches[0].screenX),false);
+    qb.addEventListener('mousedown',e=>s(e.screenX),false);
+    qb.addEventListener('mouseup',e=>e(e.screenX),false);
+    qb.addEventListener('mouseleave',()=>{dragging=false;},false);
+  }
+}
+
+function bootApp(){initThemeToggle();bindControls();setHeaderMode('learn');initHome();showScreen('home');}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bootApp);
+else bootApp();

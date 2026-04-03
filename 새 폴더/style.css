@@ -1,0 +1,20 @@
+/* ═══════════════════════════════════════════════
+   style.css  —  진입점 (import 순서 = cascade 우선순위)
+
+   변경 내역 (정리 기준):
+   - style.question-base.css  → 삭제 (style.question.css에 흡수)
+   - style.question-options.css → 삭제 (style.question.css에 흡수)
+   - style.result-select.css  → 삭제 (style.result.css에 흡수)
+   - style.result-utils.css   → 삭제 (style.core.css + style.result.css에 분산)
+   총 13개 → 8개 파일
+   ═══════════════════════════════════════════════ */
+
+@import url("./style.core.css");          /* 변수·리셋·공용 버튼·모달 */
+@import url("./style.home.css");           /* 홈 화면 */
+@import url("./style.select.css");         /* 과목·파트·모드 선택 */
+@import url("./style.quiz.css");           /* 퀴즈 헤더·진행률·네비·바디 */
+@import url("./style.exam-controls.css");  /* 시험모드 레이아웃 오버라이드 */
+@import url("./style.question.css");       /* 문제 블록·선택지·인라인 액션 */
+@import url("./style.explain-nav.css");    /* 해설 섹션 컴포넌트 */
+@import url("./style.result.css");         /* 결과 화면 */
+@import url("./style.responsive.css");     /* 반응형 미디어 쿼리 */

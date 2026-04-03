@@ -1,31 +1,42 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>반도체설비보전기능사 필기 모의고사</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
   <a id="geminiLink" target="_blank" rel="noopener noreferrer" style="display:none;"></a>
 
-  <!-- HOME -->
+  <!-- ── HOME ── -->
   <div id="home" class="screen">
     <div class="home-inner">
       <div class="badge">반도체설비보전기능사 · 필기</div>
       <h1 class="home-title">쪽집게<br>모의고사</h1>
-      <p class="home-sub">출제기준 분석 기반 · 1타 강사 해설 포함<br>생성형 모의고사 × 60문항 · 학습모드 / 시험모드 선택</p>
+      <p class="home-sub">
+        출제기준 분석 기반 · 1타 강사 해설 포함<br>
+        생성형 모의고사 × 60문항 · 학습모드 / 시험모드 선택
+      </p>
+      <!-- 회차 카드: app.js가 동적으로 채움 -->
       <div id="examList"></div>
-      <p class="home-note">학습모드: 선택 즉시 정오답 + 해설 표시 · 시험모드: 제출 후 일괄 채점<br>합격 기준 60점 (60문항 기준 36문항 이상)</p>
-      <button id="themeToggle" class="theme-toggle" type="button">화이트 모드</button>
+      <p class="home-note">
+        학습모드: 선택 즉시 정오답 + 해설 표시 · 시험모드: 제출 후 일괄 채점<br>
+        합격 기준 60점 (60문항 기준 36문항 이상)
+      </p>
+      <button id="themeToggle" class="theme-toggle" type="button" aria-label="테마 전환">화이트 모드</button>
     </div>
   </div>
 
-  <!-- SUBJECT SELECT -->
+  <!-- ── SUBJECT SELECT ── -->
   <div id="subjectSelect" class="screen">
     <div class="select-inner">
       <button class="btn-back" onclick="goHome()">← 홈</button>
@@ -34,20 +45,20 @@
     </div>
   </div>
 
-  <!-- PART SELECT -->
+  <!-- ── PART SELECT ── -->
   <div id="partSelect" class="screen">
     <div class="select-inner">
       <button class="btn-back" onclick="goHome()">← 홈</button>
       <h2 class="select-title" id="partSelectTitle">파트를 선택하세요</h2>
       <div class="part-buttons" id="partSelectButtons"></div>
       <div class="select-actions">
-        <button class="btn-secondary" onclick="goHome()">취소</button>
+        <button class="btn-secondary" id="partSelectCancelBtn" onclick="goHome()">취소</button>
         <button class="btn-primary" id="partSelectSubmitBtn" onclick="proceedToModeSelect()" disabled>다음</button>
       </div>
     </div>
   </div>
 
-  <!-- MODE SELECT -->
+  <!-- ── MODE SELECT ── -->
   <div id="modeSelect" class="screen">
     <div class="select-inner">
       <button class="btn-back" onclick="goHome()">← 홈</button>
@@ -65,47 +76,51 @@
     </div>
   </div>
 
-  <!-- QUIZ -->
+  <!-- ── QUIZ ── -->
   <div id="quiz" class="screen">
-    <!-- 헤더: data-mode="learn" | "exam" 으로만 제어 -->
-    <header class="quiz-header" id="quizHeader">
-      <div class="qh-top">
+    <div class="quiz-header">
+      <div class="quiz-header-top">
         <button class="btn-back" onclick="goHome()">← 홈</button>
-        <div class="qh-title" id="hTitle"></div>
-        <button id="modeToggleBtn" class="mode-toggle-btn" type="button">시험모드 가기</button>
+        <div class="header-title" id="hTitle"></div>
+        <div class="quiz-header-actions">
+          <button id="examModeQuickBtn" class="exam-nav-btn" type="button">시험모드 가기</button>
+        </div>
       </div>
-      <div class="qh-progress">
-        <div class="progress-track"><div class="progress-fill" id="pFill"></div></div>
+      <div class="progress-bar-wrap">
+        <div class="progress-track">
+          <div class="progress-fill" id="pFill"></div>
+        </div>
         <div class="progress-label" id="pLabel"></div>
       </div>
-      <!-- 학습모드 전용 네비 -->
-      <div class="qh-learn-nav">
+      <div class="subject-nav-wrap">
         <div class="subject-nav" id="subjectNav"></div>
         <label class="learn-reveal-toggle" id="learnRevealToggleWrap" for="learnRevealToggle">
-          <input id="learnRevealToggle" type="checkbox" checked>
+          <input id="learnRevealToggle" type="checkbox" checked />
           <span>정답·해설</span>
         </label>
       </div>
-      <div class="qh-tag-nav">
+      <div class="tag-nav-wrap">
         <div class="tag-nav" id="tagNav"></div>
       </div>
-      <!-- 시험모드 전용 타이머 -->
-      <div class="qh-timer">
-        <div class="timer-line">
-          <span>제한 시간</span><strong id="examTotalTime">1:00:00</strong>
+      <div id="examTimerBox" class="exam-timer-box">
+        <div class="exam-timer-line">
+          <span>제한 시간</span>
+          <strong id="examTotalTime">1:00:00</strong>
         </div>
-        <div class="timer-line remain">
-          <span>남은 시간</span><strong id="examRemainTime">1:00:00</strong>
+        <div class="exam-timer-line remain">
+          <span>남은 시간</span>
+          <strong id="examRemainTime">1:00:00</strong>
         </div>
-        <div class="timer-line">
-          <span id="examPartName">파트: -</span><strong id="examProgressCount">1/60</strong>
+        <div class="exam-timer-line exam-progress-line">
+          <span id="examPartName">파트: -</span>
+          <strong id="examProgressCount">총 1/60</strong>
         </div>
       </div>
-    </header>
+    </div>
     <div class="quiz-body" id="quizBody"></div>
   </div>
 
-  <!-- RESULT -->
+  <!-- ── RESULT ── -->
   <div id="result" class="screen">
     <div class="result-inner">
       <div class="result-header">
@@ -122,9 +137,18 @@
         </div>
       </div>
       <div class="result-stats">
-        <div class="stat-card"><div class="stat-val green" id="resCorrect">-</div><div class="stat-label">정답</div></div>
-        <div class="stat-card"><div class="stat-val red" id="resWrong">-</div><div class="stat-label">오답</div></div>
-        <div class="stat-card"><div class="stat-val amber" id="resSkip">-</div><div class="stat-label">미응답</div></div>
+        <div class="stat-card">
+          <div class="stat-val green" id="resCorrect">-</div>
+          <div class="stat-label">정답</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val red" id="resWrong">-</div>
+          <div class="stat-label">오답</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val amber" id="resSkip">-</div>
+          <div class="stat-label">미응답</div>
+        </div>
       </div>
       <div class="result-review" id="resReview"></div>
       <div class="result-btns">
@@ -134,11 +158,10 @@
     </div>
   </div>
 
-  <!-- 제출 확인 모달 -->
-  <div id="submitConfirmModal" class="confirm-modal">
+  <div id="submitConfirmModal" class="confirm-modal" aria-hidden="true">
     <div class="confirm-modal-backdrop" data-close="1"></div>
-    <div class="confirm-modal-card" role="dialog" aria-modal="true">
-      <div class="confirm-modal-title">시험 제출 확인</div>
+    <div class="confirm-modal-card" role="dialog" aria-modal="true" aria-labelledby="submitConfirmTitle">
+      <div class="confirm-modal-title" id="submitConfirmTitle">시험 제출 확인</div>
       <div class="confirm-modal-msg">시험을 종료하고 제출할까요?</div>
       <div class="confirm-modal-actions">
         <button id="submitConfirmCancel" class="btn-secondary" type="button">계속 풀기</button>
@@ -147,6 +170,7 @@
     </div>
   </div>
 
-  <script src="app.js?v=20260403-4"></script>
+  <script src="app.js?v=20260403-3"></script>
 </body>
+
 </html>
