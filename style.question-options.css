@@ -16,9 +16,11 @@
   transition: all .2s;
 }
 
-.option:hover:not(.locked) {
-  background: var(--surface3);
-  border-color: var(--accent);
+@media (hover: hover) {
+  .option:hover:not(.locked) {
+    background: var(--surface3);
+    border-color: var(--accent);
+  }
 }
 
 .option.locked {
@@ -90,3 +92,56 @@ body.light-mode .option.exam-picked::before {
 .option.wrong .opt-no,
 .option.wrong .opt-name,
 .option.wrong .opt-desc {
+  color: var(--wrong-text) !important;
+}
+
+.opt-name {
+  font-size: 16px;
+  font-weight: 500;
+  color: inherit;
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 100%;
+}
+
+.opt-desc {
+  font-size: 15px;
+  color: inherit;
+  opacity: 0.8;
+  line-height: 1.65;
+  display: none;
+}
+
+.option.show-desc .opt-desc {
+  display: block;
+}
+
+.trap {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 2px 9px;
+  border-radius: 20px;
+  background: var(--trap-bg) !important;
+  color: var(--trap-text) !important;
+  display: none;
+  margin-left: 6px;
+}
+
+.correct-label {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 2px 9px;
+  border-radius: 20px;
+  background: var(--correct-badge-bg) !important;
+  color: var(--correct-badge-text) !important;
+  display: none;
+  margin-left: 6px;
+}
+
+.option.show-desc .trap.is-visible,
+.option.show-desc .correct-label.is-visible {
+  display: inline-block;
+}

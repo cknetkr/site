@@ -259,9 +259,11 @@ body.light-mode .q-tag {
   transition: all .2s;
 }
 
-.option:hover:not(.locked) {
-  background: var(--surface3);
-  border-color: var(--accent);
+@media (hover: hover) {
+  .option:hover:not(.locked) {
+    background: var(--surface3);
+    border-color: var(--accent);
+  }
 }
 
 .option.locked {

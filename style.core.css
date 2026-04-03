@@ -104,6 +104,11 @@ body.light-mode {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  -webkit-tap-highlight-color: transparent; /* 터치 하이라이트 제거 */
+}
+
+*:focus {
+  outline: none; /* 기본 아웃라인 제거 */
 }
 
 html {
