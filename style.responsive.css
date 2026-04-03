@@ -60,7 +60,8 @@
     grid-template-columns: 1fr 1fr;
     gap: 4px 12px;
     padding: 8px 12px;
-    margin-top: 10px; /* 학습모드 태그 내비게이션과 높이 footprint 일치 */
+    margin-top: 0.6rem !important; /* Row 3 여백 통일 */
+    min-height: 52px; /* Row 3 높이 통일 */
   }
 
   body.exam-layout-mode .exam-timer-line.exam-progress-line {

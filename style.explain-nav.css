@@ -143,13 +143,12 @@ hr.div {
 /* ── SUBJECT NAV ── */
 .subject-nav-wrap {
   max-width: 760px;
-  margin: 1rem auto 0;
-  min-height: 44px;
+  margin: 0.75rem auto 0; /* Row 2 여백 통일 */
+  min-height: 44px; /* Row 2 높이 통일 */
   display: flex;
   align-items: center;
   gap: 8px;
   border-bottom: 1px solid var(--border);
-  padding-bottom: 8px;
 }
 
 .subject-nav {
