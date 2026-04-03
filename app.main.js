@@ -650,10 +650,10 @@ function bindControls(){
     let sx=0,dragging=false;
     const s=x=>{sx=x;dragging=true;};
     const e=x=>{if(!dragging) return;dragging=false;const d=sx-x;if(Math.abs(d)>40) moveExamQuestion(d>0?1:-1);};
-    qb.addEventListener('touchstart',e=>s(e.changedTouches[0].screenX),false);
-    qb.addEventListener('touchend',e=>e(e.changedTouches[0].screenX),false);
-    qb.addEventListener('mousedown',e=>s(e.screenX),false);
-    qb.addEventListener('mouseup',e=>e(e.screenX),false);
+    qb.addEventListener('touchstart',evt=>s(evt.changedTouches[0].screenX),false);
+    qb.addEventListener('touchend',evt=>e(evt.changedTouches[0].screenX),false);
+    qb.addEventListener('mousedown',evt=>s(evt.screenX),false);
+    qb.addEventListener('mouseup',evt=>e(evt.screenX),false);
     qb.addEventListener('mouseleave',()=>{dragging=false;},false);
   }
 }
