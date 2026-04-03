@@ -1,0 +1,180 @@
+{
+  "parts": [
+    {
+      "tag": "기구조립",
+      "source": "data/part1.json",
+      "variants": [
+        "D:\\workbox\\exam-site\\data\\part-variants\\01_v1.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\01_v2.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\01_v3.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\01_v4.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\01_v5.json"
+      ]
+    },
+    {
+      "tag": "전장조립",
+      "source": "data/part2.json",
+      "variants": [
+        "D:\\workbox\\exam-site\\data\\part-variants\\02_v1.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\02_v2.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\02_v3.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\02_v4.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\02_v5.json"
+      ]
+    },
+    {
+      "tag": "진공/플라즈마",
+      "source": "data/part3.json",
+      "variants": [
+        "D:\\workbox\\exam-site\\data\\part-variants\\03_v1.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\03_v2.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\03_v3.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\03_v4.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\03_v5.json"
+      ]
+    },
+    {
+      "tag": "케미칼/가스",
+      "source": "data/part4.json",
+      "variants": [
+        "D:\\workbox\\exam-site\\data\\part-variants\\04_v1.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\04_v2.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\04_v3.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\04_v4.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\04_v5.json"
+      ]
+    },
+    {
+      "tag": "Photo/Etch 장비",
+      "source": "data/part5.json",
+      "variants": [
+        "D:\\workbox\\exam-site\\data\\part-variants\\05_v1.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\05_v2.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\05_v3.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\05_v4.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\05_v5.json"
+      ]
+    },
+    {
+      "tag": "박막/확산 장비",
+      "source": "data/part6.json",
+      "variants": [
+        "D:\\workbox\\exam-site\\data\\part-variants\\06_v1.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\06_v2.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\06_v3.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\06_v4.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\06_v5.json"
+      ]
+    },
+    {
+      "tag": "패키징 장비",
+      "source": "data/part7.json",
+      "variants": [
+        "D:\\workbox\\exam-site\\data\\part-variants\\07_v1.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\07_v2.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\07_v3.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\07_v4.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\07_v5.json"
+      ]
+    },
+    {
+      "tag": "안전관리",
+      "source": "data/part8.json",
+      "variants": [
+        "D:\\workbox\\exam-site\\data\\part-variants\\08_v1.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\08_v2.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\08_v3.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\08_v4.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\08_v5.json"
+      ]
+    },
+    {
+      "tag": "PLC 제어",
+      "source": "data/part9.json",
+      "variants": [
+        "D:\\workbox\\exam-site\\data\\part-variants\\09_v1.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\09_v2.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\09_v3.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\09_v4.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\09_v5.json"
+      ]
+    },
+    {
+      "tag": "센서",
+      "source": "data/part10.json",
+      "variants": [
+        "D:\\workbox\\exam-site\\data\\part-variants\\10_v1.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\10_v2.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\10_v3.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\10_v4.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\10_v5.json"
+      ]
+    },
+    {
+      "tag": "모터 제어",
+      "source": "data/part11.json",
+      "variants": [
+        "D:\\workbox\\exam-site\\data\\part-variants\\11_v1.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\11_v2.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\11_v3.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\11_v4.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\11_v5.json"
+      ]
+    },
+    {
+      "tag": "공기압 제어",
+      "source": "data/part12.json",
+      "variants": [
+        "D:\\workbox\\exam-site\\data\\part-variants\\12_v1.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\12_v2.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\12_v3.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\12_v4.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\12_v5.json"
+      ]
+    },
+    {
+      "tag": "공기압 장치",
+      "source": "data/part13.json",
+      "variants": [
+        "D:\\workbox\\exam-site\\data\\part-variants\\13_v1.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\13_v2.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\13_v3.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\13_v4.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\13_v5.json"
+      ]
+    },
+    {
+      "tag": "자동제어",
+      "source": "data/part14.json",
+      "variants": [
+        "D:\\workbox\\exam-site\\data\\part-variants\\14_v1.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\14_v2.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\14_v3.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\14_v4.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\14_v5.json"
+      ]
+    },
+    {
+      "tag": "반도체공정",
+      "source": "data/part15.json",
+      "variants": [
+        "D:\\workbox\\exam-site\\data\\part-variants\\15_v1.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\15_v2.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\15_v3.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\15_v4.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\15_v5.json"
+      ]
+    },
+    {
+      "tag": "PM/유지보수",
+      "source": "data/part16.json",
+      "variants": [
+        "D:\\workbox\\exam-site\\data\\part-variants\\16_v1.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\16_v2.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\16_v3.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\16_v4.json",
+        "D:\\workbox\\exam-site\\data\\part-variants\\16_v5.json"
+      ]
+    }
+  ]
+}

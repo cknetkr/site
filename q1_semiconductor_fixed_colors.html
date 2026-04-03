@@ -1,0 +1,134 @@
+
+<style>
+  * { box-sizing: border-box; }
+  .wrap { padding: 0.5rem 0; font-size: 15px; }
+  .card { background: #ffffff; border: 1px solid #d0d0d0; border-radius: 12px; padding: 1.5rem; margin-bottom: 16px; }
+
+  .meta { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .chip { font-size: 13px; font-weight: 500; padding: 4px 12px; border-radius: 20px; }
+  .chip-q { background: #378ADD; color: #fff; }
+  .chip-a { background: #c8e6c9; color: #1b5e20; }
+  .chip-b { background: #e8eaf6; color: #311b92; }
+
+  .q-text { font-size: 16px; font-weight: 500; color: #111111; line-height: 1.7; margin-bottom: 20px; }
+
+  .option { display: flex; gap: 12px; padding: 14px; border-radius: 8px; margin-bottom: 10px; }
+  .option.correct { border: 2px solid #1D9E75; background: #e0f7ef; }
+  .option.wrong { border: 1px solid #e57373; background: #fff0f0; }
+
+  .opt-no { font-size: 15px; font-weight: 500; min-width: 22px; padding-top: 1px; }
+  .option.correct .opt-no { color: #085041; }
+  .option.wrong .opt-no { color: #b71c1c; }
+
+  .opt-name { font-size: 15px; font-weight: 500; color: #111111; margin-bottom: 5px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+  .opt-desc { font-size: 14px; color: #444444; line-height: 1.65; }
+
+  .trap { font-size: 12px; font-weight: 500; padding: 2px 9px; border-radius: 20px; background: #ffe0cc; color: #7f2a00; }
+  .correct-label { font-size: 12px; font-weight: 500; padding: 2px 9px; border-radius: 20px; background: #1D9E75; color: #fff; }
+
+  .section-label { font-size: 12px; font-weight: 500; color: #666666; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 12px; }
+
+  .concept { border-left: 4px solid #1D9E75; padding: 12px 16px; border-radius: 0 8px 8px 0; background: #f4fdf9; margin-bottom: 12px; }
+  .concept-title { font-size: 15px; font-weight: 500; color: #111111; margin-bottom: 6px; }
+  .concept-desc { font-size: 14px; color: #333333; line-height: 1.7; }
+
+  .steps { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .step-num { width: 28px; height: 28px; border-radius: 50%; background: #534AB7; color: #fff; font-size: 13px; font-weight: 500; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .step-text { font-size: 14px; font-weight: 500; color: #111111; }
+  .arrow { font-size: 16px; color: #888888; }
+
+  .rule-box { border-left: 4px solid #e6960c; background: #fff8e8; padding: 14px 16px; border-radius: 0 8px 8px 0; margin-bottom: 12px; }
+  .rule-title { font-size: 14px; font-weight: 500; color: #3d2400; margin-bottom: 10px; }
+  .rule-row { display: flex; align-items: baseline; gap: 10px; margin-bottom: 6px; }
+  .rule-keyword { font-size: 14px; font-weight: 500; color: #7f4500; min-width: 90px; }
+  .rule-action { font-size: 14px; color: #3d2400; }
+
+  .link-box { border-left: 4px solid #378ADD; background: #e8f3fc; padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 14px; color: #0a2540; line-height: 1.65; }
+  .link-box strong { color: #185FA5; }
+
+  hr.div { border: none; border-top: 1px solid #e0e0e0; margin: 14px 0; }
+</style>
+
+<div class="wrap">
+
+  <div class="card">
+    <div class="meta">
+      <span class="chip chip-q">Q1</span>
+      <span class="chip chip-a">기구조립</span>
+      <span class="chip chip-b">암기</span>
+    </div>
+    <p class="q-text">반도체 장비 조립 시 기구 도면에서 가장 먼저 확인해야 하는 사항은?</p>
+
+    <div class="option wrong">
+      <span class="opt-no">①</span>
+      <div>
+        <div class="opt-name">부품 단가 <span class="trap">함정: 구매 업무</span></div>
+        <div class="opt-desc">도면은 제작·조립 기술 문서입니다. 비용·구매 정보는 BOM(자재명세서)에서 관리하며 도면과 무관합니다.</div>
+      </div>
+    </div>
+
+    <div class="option correct">
+      <span class="opt-no">②</span>
+      <div>
+        <div class="opt-name">조립 순서와 기준면(기준점) <span class="correct-label">정답</span></div>
+        <div class="opt-desc">기준면(Datum)은 모든 치수·공차의 출발점입니다. 이를 먼저 파악해야 조립 오차 누적을 방지하고 정밀도를 확보할 수 있습니다.</div>
+      </div>
+    </div>
+
+    <div class="option wrong">
+      <span class="opt-no">③</span>
+      <div>
+        <div class="opt-name">장비 색상 <span class="trap">함정: 외관 사양</span></div>
+        <div class="opt-desc">색상은 도색·도장 공정에서 처리하는 외관 정보이며, 조립 정밀도와 직접 관계가 없습니다.</div>
+      </div>
+    </div>
+
+    <div class="option wrong">
+      <span class="opt-no">④</span>
+      <div>
+        <div class="opt-name">전원 용량 <span class="trap">함정: 전장 도면</span></div>
+        <div class="opt-desc">전원 용량은 전기·전장 도면에서 확인하는 정보로, 기구 도면의 확인 범위 밖입니다.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">핵심 개념</div>
+    <div class="concept">
+      <div class="concept-title">기준면(Datum)이란?</div>
+      <div class="concept-desc">모든 치수와 공차를 측정하는 기준이 되는 면·선·점입니다. 건물의 지반(바닥)에 해당하며, 이 기준이 틀어지면 이후 모든 조립 치수가 연쇄적으로 틀어집니다.</div>
+    </div>
+    <div class="concept">
+      <div class="concept-title">왜 조립 순서를 먼저 봐야 하는가?</div>
+      <div class="concept-desc">반도체 장비는 수십~수백 개 부품이 순차 조립됩니다. 순서가 바뀌면 이미 조립된 부품을 분해해야 하거나, 후공정 기준면이 달라져 오차가 누적됩니다.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">강사 팁</div>
+    <div class="steps">
+      <div class="step-num">1</div>
+      <span class="step-text">기준면 확인</span>
+      <span class="arrow">→</span>
+      <div class="step-num">2</div>
+      <span class="step-text">조립 순서 파악</span>
+      <span class="arrow">→</span>
+      <div class="step-num">3</div>
+      <span class="step-text">공차 맞추기</span>
+    </div>
+
+    <hr class="div">
+
+    <div class="rule-box">
+      <div class="rule-title">오답 소거 공식 — 이 키워드가 보이면 즉시 소거</div>
+      <div class="rule-row"><span class="rule-keyword">구매 / 단가</span><span class="rule-action">→ BOM 영역, 도면과 무관</span></div>
+      <div class="rule-row"><span class="rule-keyword">외관 / 색상</span><span class="rule-action">→ 도장 공정 영역, 정밀도와 무관</span></div>
+      <div class="rule-row"><span class="rule-keyword">전원 / 전장</span><span class="rule-action">→ 전기 도면 영역, 기구 도면 밖</span></div>
+    </div>
+
+    <div class="link-box">
+      이 개념은 <strong>Q5 끼워맞춤 공차</strong> 문제와 직결됩니다 — Datum을 기준으로 공차 범위를 계산하기 때문입니다.
+    </div>
+  </div>
+
+</div>

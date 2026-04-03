@@ -1,0 +1,84 @@
+{
+  "parts": [
+    {
+      "tag": "기구조립",
+      "count": 30,
+      "file": "data/part1.json"
+    },
+    {
+      "tag": "전장조립",
+      "count": 30,
+      "file": "data/part2.json"
+    },
+    {
+      "tag": "진공/플라즈마",
+      "count": 30,
+      "file": "data/part3.json"
+    },
+    {
+      "tag": "케미칼/가스",
+      "count": 30,
+      "file": "data/part4.json"
+    },
+    {
+      "tag": "Photo/Etch 장비",
+      "count": 30,
+      "file": "data/part5.json"
+    },
+    {
+      "tag": "박막/확산 장비",
+      "count": 30,
+      "file": "data/part6.json"
+    },
+    {
+      "tag": "패키징 장비",
+      "count": 30,
+      "file": "data/part7.json"
+    },
+    {
+      "tag": "안전관리",
+      "count": 30,
+      "file": "data/part8.json"
+    },
+    {
+      "tag": "PLC 제어",
+      "count": 30,
+      "file": "data/part9.json"
+    },
+    {
+      "tag": "센서",
+      "count": 41,
+      "file": "data/part10.json"
+    },
+    {
+      "tag": "모터 제어",
+      "count": 30,
+      "file": "data/part11.json"
+    },
+    {
+      "tag": "공기압 제어",
+      "count": 30,
+      "file": "data/part12.json"
+    },
+    {
+      "tag": "공기압 장치",
+      "count": 30,
+      "file": "data/part13.json"
+    },
+    {
+      "tag": "자동제어",
+      "count": 30,
+      "file": "data/part14.json"
+    },
+    {
+      "tag": "반도체공정",
+      "count": 30,
+      "file": "data/part15.json"
+    },
+    {
+      "tag": "PM/유지보수",
+      "count": 30,
+      "file": "data/part16.json"
+    }
+  ]
+}

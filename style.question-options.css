@@ -1,0 +1,92 @@
+/* ── OPTION (카드형 확장) ── */
+.opts {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.option {
+  display: flex;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  transition: all .2s;
+}
+
+.option:hover:not(.locked) {
+  background: var(--surface3);
+  border-color: var(--accent);
+}
+
+.option.locked {
+  cursor: default;
+}
+
+.option.selected {
+  border-color: var(--accent);
+  background: rgba(0, 212, 255, 0.06);
+}
+
+.option.exam-picked {
+  border-color: #19d4ff;
+  background: rgba(0, 212, 255, 0.14);
+  box-shadow: 0 0 0 1px rgba(0, 212, 255, 0.35), 0 8px 18px rgba(0, 212, 255, 0.12);
+  position: relative;
+}
+
+.option.exam-picked::before {
+  content: '선택';
+  position: absolute;
+  right: 10px;
+  top: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #7ee8ff;
+  background: rgba(0, 212, 255, 0.14);
+  border: 1px solid rgba(0, 212, 255, 0.35);
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+
+body.light-mode .option.exam-picked {
+  border-color: #006de0;
+  background: #e8f3ff;
+  box-shadow: 0 0 0 1px rgba(0, 109, 224, 0.28), 0 8px 18px rgba(0, 109, 224, 0.08);
+}
+
+body.light-mode .option.exam-picked::before {
+  color: #0057b8;
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+.option.correct {
+  border: 2px solid var(--ok-border) !important;
+  background: var(--ok-bg) !important;
+}
+
+.option.wrong {
+  border: 1.5px solid var(--wrong-border) !important;
+  background: var(--wrong-bg) !important;
+}
+
+.opt-no {
+  font-size: 15px;
+  font-family: var(--mono);
+  font-weight: 500;
+  min-width: 22px;
+  padding-top: 1px;
+}
+
+.option.correct .opt-no,
+.option.correct .opt-name,
+.option.correct .opt-desc {
+  color: var(--ok-text) !important;
+}
+
+.option.wrong .opt-no,
+.option.wrong .opt-name,
+.option.wrong .opt-desc {

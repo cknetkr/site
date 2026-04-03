@@ -1,0 +1,327 @@
+/* ── QUIZ ── */
+#quiz {
+  padding: 0;
+  background: var(--header-bg);
+}
+
+.quiz-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  width: min(760px, calc(100% - 24px));
+  margin: 0 auto;
+  box-sizing: border-box;
+  background: var(--header-bg);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0.9rem 1.2rem;
+}
+
+.quiz-header-top {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  gap: 12px;
+  min-height: 42px;
+}
+
+.quiz-header-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.exam-timer-box {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 170px;
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface2);
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.exam-timer-box.visible {
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.exam-timer-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--text2);
+  line-height: 1.3;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.exam-progress-line {
+  color: var(--text2);
+}
+
+.exam-progress-line strong {
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.exam-timer-line strong {
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.exam-timer-line.remain strong {
+  color: #ff6b9a;
+}
+
+.exam-nav-btn,
+.exam-submit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0;
+  border-radius: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font);
+  line-height: 1;
+  transition: all 0.1s;
+  white-space: nowrap;
+}
+
+.exam-nav-btn:hover:not(:disabled),
+.exam-submit-btn:hover:not(:disabled) {
+  background: var(--surface2);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.exam-nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.exam-submit-btn {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+  font-weight: 700;
+}
+
+.exam-submit-btn:hover:not(:disabled) {
+  opacity: 0.88;
+  background: var(--accent);
+}
+
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text2);
+  padding: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: var(--font);
+  line-height: 1;
+  transition: all .15s;
+  white-space: nowrap;
+  min-width: 52px;
+  height: 32px;
+}
+
+.btn-back:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.header-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+}
+
+#examModeQuickBtn {
+  min-width: 114px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.header-score {
+  font-family: var(--mono);
+  font-size: 13px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 5px 12px;
+  border-radius: 8px;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.progress-bar-wrap {
+  max-width: 760px;
+  margin: 0.6rem auto 0;
+  min-height: 28px;
+}
+
+body.light-mode .progress-bar-wrap {
+  opacity: 0.96;
+}
+
+.progress-track {
+  height: 4px;
+  background: var(--surface2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent2), var(--accent));
+  border-radius: 999px;
+  transition: width .4s ease;
+  width: 0;
+}
+
+.progress-label {
+  font-size: 14px;
+  color: var(--text);
+  margin-top: 4px;
+  text-align: right;
+  font-family: var(--mono);
+  font-weight: 700;
+}
+
+.progress-label.is-exam {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-align: left;
+  gap: 10px;
+}
+
+.progress-label .p-part {
+  color: var(--text);
+  font-weight: 700;
+  max-width: 70%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.progress-label .p-total {
+  color: var(--text);
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── TAG NAV ── */
+.tag-nav-wrap {
+  max-width: 760px;
+  margin: 0.5rem auto 0;
+  min-height: 34px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+
+.tag-nav-wrap::-webkit-scrollbar {
+  display: none;
+}
+
+.tag-nav {
+  display: flex;
+  gap: 6px;
+  padding-bottom: 2px;
+  width: max-content;
+}
+
+.tag-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text2);
+  font-size: 11.5px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  scroll-snap-align: start;
+  font-family: var(--font);
+  transition: all .15s;
+}
+
+.tag-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(0, 212, 255, 0.06);
+}
+
+.tag-btn.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(0, 212, 255, 0.1);
+}
+
+.tag-btn-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.tag-btn-cnt {
+  font-family: var(--mono);
+  font-size: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  padding: 0 5px;
+  color: var(--text3);
+}
+
+.quiz-body {
+  flex: 1;
+  padding: 1.5rem 1.2rem 3rem;
+  max-width: 760px;
+  margin: 0 auto;
+  width: 100%;
+}

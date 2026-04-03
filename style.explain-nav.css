@@ -1,0 +1,249 @@
+/* ── 하단 해설 섹션 (카드 2 & 3) ── */
+.section-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--exp-label) !important;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.concept {
+  border-left: 4px solid var(--concept-accent) !important;
+  padding: 12px 16px;
+  border-radius: 0 8px 8px 0;
+  background: var(--exp-concept-bg) !important;
+  margin-bottom: 12px;
+}
+
+.concept-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--exp-concept-title) !important;
+  margin-bottom: 6px;
+}
+
+.concept-desc {
+  font-size: 14px;
+  color: var(--exp-concept-desc) !important;
+  line-height: 1.7;
+}
+
+.steps {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--step-num-bg) !important;
+  color: var(--step-num-text) !important;
+  font-size: 13px;
+  font-family: var(--mono);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.step-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--exp-step-text) !important;
+}
+
+.arrow {
+  font-size: 16px;
+  color: var(--exp-arrow) !important;
+}
+
+.rule-box {
+  border-left: 4px solid var(--rule-accent) !important;
+  background: var(--exp-rule-bg) !important;
+  padding: 14px 16px;
+  border-radius: 0 8px 8px 0;
+  margin-bottom: 12px;
+}
+
+.rule-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--exp-rule-title) !important;
+  margin-bottom: 10px;
+}
+
+.rule-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.rule-keyword {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--exp-rule-keyword) !important;
+  min-width: 90px;
+}
+
+.rule-action {
+  font-size: 14px;
+  color: var(--exp-rule-action) !important;
+}
+
+.link-box {
+  border-left: 4px solid var(--link-accent) !important;
+  background: var(--exp-link-bg) !important;
+  padding: 12px 16px;
+  border-radius: 0 8px 8px 0;
+  font-size: 14px;
+  color: var(--exp-link-text) !important;
+  line-height: 1.65;
+}
+
+.link-box strong {
+  color: var(--exp-link-strong) !important;
+}
+
+hr.div {
+  border: none;
+  border-top: 1px solid var(--exp-divider) !important;
+  margin: 14px 0;
+}
+
+.tag-anchor-spacer {
+  display: block;
+  height: 0;
+}
+
+.opt-body {
+  flex: 1;
+}
+
+.step-inline-note {
+  margin-bottom: 12px;
+}
+
+.exp-card {
+  margin-top: 16px;
+}
+
+.review-perfect {
+  padding: 8px 0;
+  color: var(--text2);
+  font-size: 14px;
+}
+
+/* ── SUBJECT NAV ── */
+.subject-nav-wrap {
+  max-width: 760px;
+  margin: 1rem auto 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+
+.subject-nav {
+  display: flex;
+  gap: 8px;
+}
+
+.learn-reveal-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  user-select: none;
+  cursor: pointer;
+}
+
+.learn-reveal-toggle.is-hidden {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.subject-nav-wrap.is-collapsed,
+.tag-nav-wrap.is-collapsed {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.learn-reveal-toggle input {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--accent);
+}
+
+.sub-nav-btn {
+  background: none;
+  border: none;
+  color: var(--text2);
+  font-size: 15px;
+  font-weight: 700;
+  padding: 4px 12px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: 0.2s;
+  font-family: var(--font);
+}
+
+.sub-nav-btn.active {
+  color: var(--accent);
+  background: rgba(0, 212, 255, 0.1);
+}
+
+.sub-nav-btn:hover {
+  color: var(--accent);
+}
+
+.exp-opt-row.is-ans {
+  background: rgba(16, 185, 129, 0.07);
+  border-left: 3px solid var(--green);
+}
+
+.exp-opt-row.is-wrong-choice {
+  background: rgba(239, 68, 68, 0.07);
+  border-left: 3px solid var(--red);
+}
+
+.exp-opt-num {
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: 12px;
+  margin-right: 6px;
+}
+
+.exp-opt-row.is-ans .exp-opt-num {
+  color: var(--green);
+}
+
+.exp-opt-row.is-wrong-choice .exp-opt-num {
+  color: var(--red);
+}
+
+.exp-opt-label {
+  font-weight: 500;
+  color: var(--text);
+}
+
+.exp-opt-why {
+  color: var(--text2);
+  margin-top: 3px;
+}
+
