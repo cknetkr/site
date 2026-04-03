@@ -1,6 +1,6 @@
 @media (max-width: 768px) {
   :root {
-    --header-side-width: 112px;
+    --header-side-width: 82px; /* 112px에서 축소 */
   }
 
   html {
@@ -23,6 +23,8 @@
 
   .btn-back {
     flex: 0 0 var(--header-side-width);
+    font-size: 17px;
+    font-weight: 700;
   }
 
   .quiz-header-actions {
@@ -42,8 +44,9 @@
     overflow: visible;
     text-overflow: clip;
     line-height: 1.35;
-    font-size: 20px;
+    font-size: 19px; /* 20px에서 약간 축소하여 공간 확보 */
     text-align: center;
+    font-weight: 800;
   }
 
   .exam-timer-box {
@@ -53,11 +56,21 @@
   }
 
   body.exam-layout-mode .exam-timer-box {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr; /* 2열 구조 */
+    gap: 4px 12px;
+    padding: 6px 12px;
+    margin-top: 4px;
+  }
+
+  body.exam-layout-mode .exam-timer-line.exam-progress-line {
+    grid-column: 1 / span 2; /* 파트/진도 정보는 아랫줄 전체 차지 */
     display: flex !important;
-    flex-direction: row;
-    align-items: center;
+    flex-direction: row; /* 일단은 가로로 하되 공간 부족시를 대비해 사이 거리 확보 */
     justify-content: space-between;
-    gap: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 4px;
+    margin-top: 2px;
   }
 
   body.exam-layout-mode .exam-timer-line {
